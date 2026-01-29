@@ -1,6 +1,6 @@
-# SnapBooth Desktop 📸
+# SelfieBox 📸
 
-SnapBooth Desktop is a lightweight photobooth desktop application built
+SelfieBox is a lightweight photobooth desktop application built
 with **Electron.js**.\
 It allows users to capture selfies using a webcam, apply minimal
 editing, and manage photobooth settings such as price and capture timer.
