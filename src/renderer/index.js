@@ -40,16 +40,24 @@ const saveTimerBtn = document.getElementById("saveTimerBtn");
 const priceInput = document.getElementById("priceInput");
 const timerInput = document.getElementById("timerInput");
 
+const cameraWrapper =
+  document.getElementById("cameraPreview").parentElement.parentElement;
+
 const video = document.getElementById("cameraPreview");
 const captureBtn = document.getElementById("captureBtn");
 const countdownText = document.getElementById("countdownText");
 
+const editorContainer = document.getElementById("editorContainer");
+const canvasEl = document.getElementById("fabricCanvas");
+
 const addTextBtn = document.getElementById("addTextBtn");
 const addFrameBtn = document.getElementById("addFrameBtn");
+const addHeartBtn = document.getElementById("addHeartBtn");
+const addStarBtn = document.getElementById("addStarBtn");
 const saveEditedBtn = document.getElementById("saveEditedBtn");
 
 // ===============================
-// EDITOR STATE
+// STATE
 // ===============================
 
 let fabricInstance = null;
@@ -75,9 +83,9 @@ async function initConfig() {
   await loadTimerConfig();
   await loadPriceConfig();
 
-  titleApp.textContent = `Welcome to Photobooth Services ${capturePrice} IDR`;
+  titleApp.textContent = `Welcome to Photobooth Services (${capturePrice})`;
 
-  console.log("Config loaded successfully!");
+  console.log("CONFIG READY");
 }
 
 initConfig();
@@ -88,7 +96,7 @@ initConfig();
 
 fullscreenBtn.addEventListener("click", async () => {
   const state = await window.api.toggleFullscreen();
-  alert(state ? "Fullscreen mode" : "Resolution: 1200 x 800");
+  alert(state ? "Fullscreen mode" : "Window mode");
 });
 
 // ==================================================
@@ -118,14 +126,10 @@ window.api.onOpenTimerModal(() => {
 // PRICE EVENTS
 // ==================================================
 
-// PRICE CANCEL
-cancelPriceBtn.addEventListener("click", () => {
-  modalSystem.closeAllModals();
-});
+cancelPriceBtn.addEventListener("click", modalSystem.closeAllModals);
 
-// PRICE SAVE
 savePriceBtn.addEventListener("click", async () => {
-  const value = parseInt(document.getElementById("priceInput").value);
+  const value = parseInt(priceInput.value);
 
   if (!isNaN(value) && value >= 0) {
     const result = await window.api.savePrice(value);
@@ -133,7 +137,7 @@ savePriceBtn.addEventListener("click", async () => {
     if (result.success) {
       setCapturePrice(value);
       titleApp.textContent = `Welcome to Photobooth Services (${capturePrice})`;
-      alert("New price saved!");
+      alert("Price saved!");
     }
   }
 
@@ -144,10 +148,7 @@ savePriceBtn.addEventListener("click", async () => {
 // TIMER EVENTS
 // ==================================================
 
-// TIMER CANCEL
-cancelTimerBtn.addEventListener("click", () => {
-  modalSystem.closeAllModals();
-});
+cancelTimerBtn.addEventListener("click", modalSystem.closeAllModals);
 
 saveTimerBtn.addEventListener("click", async () => {
   const value = parseInt(timerInput.value);
@@ -157,7 +158,7 @@ saveTimerBtn.addEventListener("click", async () => {
 
     if (result.success) {
       setCaptureTimer(value);
-      alert("New timer saved!");
+      alert("Timer saved!");
     }
   }
 
@@ -174,49 +175,48 @@ captureBtn.addEventListener("click", () => {
   isCapturing = true;
 
   startCountdown(captureTimer, countdownText, async () => {
-    try {
-      const imageData = captureFrame(video);
-      const result = await window.api.saveRawPhoto(imageData);
+    const imageData = captureFrame(video);
+    const result = await window.api.saveRawPhoto(imageData);
 
-      if (result.success) {
-        alert("Photo saved successfully!\n\n" + result.path);
-
-        openEditor(result.path);
-      } else {
-        alert("Failed to save photo!");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Capture error");
+    if (result.success) {
+      openEditor(result.path);
+    } else {
+      alert("Save failed");
+      isCapturing = false;
     }
-
-    isCapturing = false;
   });
 });
 
 // ==================================================
-// EDITOR BUTTON EVENTS
+// EDITOR BUTTONS
 // ==================================================
 
 addTextBtn.addEventListener("click", () => {
   if (!fabricInstance) return alert("Editor not ready");
 
-  const text = new fabric.IText("Your Text", {
-    left: 400,
-    top: 300,
-    fill: "#000",
+  const text = new fabric.IText("TEXT", {
+    left: fabricInstance.getWidth() / 2,
+    top: fabricInstance.getHeight() / 2,
+
+    fill: "#FFD700",
     fontSize: 40,
     fontWeight: "bold",
+
     originX: "center",
     originY: "center",
-    cornerStyle: "circle",
-    borderColor: "#2563eb",
-    cornerColor: "#2563eb",
+    editable: true,
   });
 
   fabricInstance.add(text);
   fabricInstance.setActiveObject(text);
   fabricInstance.renderAll();
+
+  // IMPORTANT: force editing mode (Electron fix)
+  setTimeout(() => {
+    text.enterEditing();
+    text.hiddenTextarea.focus();
+    text.selectAll();
+  }, 100);
 });
 
 addFrameBtn.addEventListener("click", () => {
@@ -225,11 +225,11 @@ addFrameBtn.addEventListener("click", () => {
   const frame = new fabric.Rect({
     width: 780,
     height: 580,
-    left: 10,
-    top: 10,
+    top: 5,
+    left: 5,
 
     fill: "transparent",
-    stroke: "#000",
+    stroke: "#FFD700",
     strokeWidth: 12,
 
     selectable: false,
@@ -241,10 +241,69 @@ addFrameBtn.addEventListener("click", () => {
   fabricInstance.renderAll();
 });
 
+addHeartBtn.addEventListener("click", () => {
+  if (!fabricInstance) return alert("Editor not ready");
+
+  const heartPath =
+    "M 272 48 C 272 21.5 250.5 0 224 0 C 196.5 0 176 21.5 176 48 C 176 21.5 154.5 0 128 0 C 101.5 0 80 21.5 80 48 C 80 120 176 192 176 192 C 176 192 272 120 272 48 Z";
+
+  const heart = new fabric.Path(heartPath, {
+    left: fabricInstance.getWidth() / 2,
+    top: fabricInstance.getHeight() / 2,
+
+    fill: "#FF1493", // PINK
+    scaleX: 0.5,
+    scaleY: 0.5,
+
+    originX: "center",
+    originY: "center",
+
+    shadow: "2px 2px 8px rgba(0,0,0,0.3)",
+  });
+
+  fabricInstance.add(heart);
+  fabricInstance.setActiveObject(heart);
+  fabricInstance.renderAll();
+});
+
+addStarBtn.addEventListener("click", () => {
+  if (!fabricInstance) return alert("Editor not ready");
+
+  const starPoints = [
+    { x: 0, y: 50 },
+    { x: 50, y: 50 },
+    { x: 65, y: 0 },
+    { x: 80, y: 50 },
+    { x: 130, y: 50 },
+    { x: 90, y: 80 },
+    { x: 110, y: 130 },
+    { x: 65, y: 100 },
+    { x: 20, y: 130 },
+    { x: 40, y: 80 },
+  ];
+
+  const star = new fabric.Polygon(starPoints, {
+    left: fabricInstance.getWidth() / 2,
+    top: fabricInstance.getHeight() / 2,
+
+    fill: "#FFD700", // Bright gold
+    scaleX: 0.6,
+    scaleY: 0.6,
+
+    originX: "center",
+    originY: "center",
+
+    shadow: "2px 2px 8px rgba(0,0,0,0.3)",
+  });
+
+  fabricInstance.add(star);
+  fabricInstance.setActiveObject(star);
+  fabricInstance.renderAll();
+});
+
 saveEditedBtn.addEventListener("click", async () => {
   if (!fabricInstance) return alert("Editor not ready");
 
-  // Remove selection box before export
   fabricInstance.discardActiveObject();
   fabricInstance.renderAll();
 
@@ -257,26 +316,23 @@ saveEditedBtn.addEventListener("click", async () => {
   const result = await window.api.saveFinalPhoto(finalImage);
 
   if (result.success) {
-    alert("Final photo saved!\n\n" + result.path);
-    backToCameraView();
+    alert("Final photo saved!");
+
+    closeEditor();
   } else {
     alert("Export failed");
   }
 });
 
+// ==================================================
+// EDITOR CORE
+// ==================================================
+
 function openEditor(imagePath) {
-  console.log("OPEN EDITOR FILE:", imagePath);
+  console.log("OPEN EDITOR:", imagePath);
 
-  // Hide camera UI
-  document
-    .getElementById("cameraPreview")
-    .parentElement.parentElement.classList.add("hidden");
-
-  // Show editor
-  const editorContainer = document.getElementById("editorContainer");
+  cameraWrapper.classList.add("hidden");
   editorContainer.classList.remove("hidden");
-
-  const canvasEl = document.getElementById("fabricCanvas");
 
   const WIDTH = 800;
   const HEIGHT = 600;
@@ -284,13 +340,11 @@ function openEditor(imagePath) {
   canvasEl.width = WIDTH;
   canvasEl.height = HEIGHT;
 
-  // Destroy old fabric instance safely
   if (fabricInstance) {
     fabricInstance.dispose();
     fabricInstance = null;
   }
 
-  // Create new fabric instance
   fabricInstance = new fabric.Canvas("fabricCanvas", {
     width: WIDTH,
     height: HEIGHT,
@@ -298,15 +352,18 @@ function openEditor(imagePath) {
     preserveObjectStacking: true,
   });
 
-  // Convert Windows path → file URL
+  // Enable double click edit
+  fabricInstance.on("mouse:dblclick", (e) => {
+    if (e.target && e.target.type === "i-text") {
+      e.target.enterEditing();
+      e.target.hiddenTextarea.focus();
+    }
+  });
+
   const fileUrl = `file://${imagePath.replace(/\\/g, "/")}`;
 
-  console.log("LOAD IMAGE:", fileUrl);
-
   fabric.Image.fromURL(fileUrl, (img) => {
-    const scaleX = WIDTH / img.width;
-    const scaleY = HEIGHT / img.height;
-    const scale = Math.min(scaleX, scaleY);
+    const scale = Math.min(WIDTH / img.width, HEIGHT / img.height);
 
     img.scale(scale);
 
@@ -318,29 +375,21 @@ function openEditor(imagePath) {
 
       selectable: false,
       evented: false,
-      lockMovementX: true,
-      lockMovementY: true,
-      lockScalingX: true,
-      lockScalingY: true,
-      lockRotation: true,
     });
 
     fabricInstance.add(img);
     fabricInstance.sendToBack(img);
     fabricInstance.renderAll();
-
-    console.log("FABRIC IMAGE LOADED");
   });
 }
 
-function backToCameraView() {
-  // Hide editor
-  const editorContainer = document.getElementById("editorContainer");
+// ==================================================
+// CLOSE EDITOR → BACK TO CAMERA
+// ==================================================
+
+function closeEditor() {
   editorContainer.classList.add("hidden");
-
-  // Show camera UI
-  const cameraWrapper =
-    document.getElementById("cameraPreview").parentElement.parentElement;
-
   cameraWrapper.classList.remove("hidden");
+
+  isCapturing = false;
 }
