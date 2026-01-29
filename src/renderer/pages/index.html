@@ -1,0 +1,132 @@
+<!-- src/renderer/pages/index.html -->
+
+<!doctype html>
+<html>
+  <head>
+    <title>Photobooth App</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fabric.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  </head>
+
+  <body class="bg-gray-100 font-sans">
+    <div class="p-4">
+      <h1 id="titleApp" class="text-2xl font-bold mb-4"></h1>
+
+      <!-- MAIN CONTROLS -->
+      <div class="flex flex-wrap gap-3">
+        <button
+          id="fullscreenBtn"
+          class="bg-blue-600 text-white px-5 py-3 rounded-lg shadow hover:bg-blue-700 active:scale-95 transition"
+        >
+          TOGGLE FULLSCREEN
+        </button>
+
+        <button
+          id="testBtn"
+          class="bg-green-600 text-white px-5 py-3 rounded-lg shadow hover:bg-green-700 active:scale-95 transition"
+        >
+          TEST IPC
+        </button>
+      </div>
+    </div>
+
+    <!-- CAMERA PREVIEW -->
+    <div class="mt-2 flex flex-col items-center gap-3">
+      <!-- VIDEO WRAPPER -->
+      <div class="relative flex justify-center items-center">
+        <!-- VIDEO -->
+        <video
+          id="cameraPreview"
+          autoplay
+          playsinline
+          class="w-[640px] h-[480px] bg-black rounded-xl shadow-lg object-cover"
+        ></video>
+        <!-- COUNTDOWN OVERLAY -->
+        <div
+          id="countdownText"
+          class="absolute text-8xl font-bold text-red-600 hidden flex items-center justify-center"
+        >
+          3
+        </div>
+      </div>
+      <button
+        id="captureBtn"
+        class="bg-red-600 text-white px-6 py-2 rounded-xl shadow hover:bg-red-700 active:scale-95 transition"
+      >
+        CAPTURE PHOTO
+      </button>
+    </div>
+
+    <!-- BACKDROP -->
+    <div id="modalBackdrop" class="fixed inset-0 bg-black/50 hidden z-40"></div>
+
+    <!-- PRICE MODAL -->
+    <div
+      id="priceModal"
+      class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl p-6 w-[320px] flex flex-col items-center justify-center gap-4 hidden z-50"
+    >
+      <h2 class="text-xl font-semibold">Price Settings</h2>
+
+      <input
+        id="priceInput"
+        type="number"
+        placeholder="Enter price (example: 10000)"
+        class="w-full border rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+
+      <div class="flex gap-3">
+        <button
+          id="cancelPriceBtn"
+          class="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition"
+        >
+          CANCEL
+        </button>
+
+        <button
+          id="savePriceBtn"
+          class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+        >
+          SAVE
+        </button>
+      </div>
+    </div>
+
+    <!-- TIMER MODAL -->
+    <div
+      id="timerModal"
+      class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl p-6 w-[320px] flex flex-col items-center justify-center gap-4 hidden z-50"
+    >
+      <h2 class="text-xl font-semibold">Timer Settings</h2>
+
+      <input
+        id="timerInput"
+        type="number"
+        placeholder="Enter timer (seconds)"
+        class="w-full border rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+
+      <div class="flex gap-3">
+        <button
+          id="cancelTimerBtn"
+          class="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition"
+        >
+          CANCEL
+        </button>
+
+        <button
+          id="saveTimerBtn"
+          class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+        >
+          SAVE
+        </button>
+      </div>
+    </div>
+
+    <!-- LOAD MAIN RENDERER SCRIPT -->
+    <script type="module" src="../index.js"></script>
+  </body>
+</html>
