@@ -17,6 +17,7 @@ function ipcHandlers() {
     "save-timer",
     "get-timer",
     "save-raw-photo",
+    "save-final-photo",
   ];
 
   channels.forEach((ch) => ipcMain.removeHandler(ch));
@@ -116,6 +117,26 @@ function ipcHandlers() {
     const fileName = `photo_${Date.now()}.png`;
 
     const filePath = path.join(process.cwd(), "assets", "raw", fileName);
+
+    fs.writeFileSync(filePath, base64Data, "base64");
+
+    return {
+      success: true,
+      path: filePath,
+      fileName,
+    };
+  });
+
+  // ============================
+  // RAW PHOTO SAVE
+  // ============================
+
+  ipcMain.handle("save-final-photo", async (event, base64Image) => {
+    const base64Data = base64Image.replace(/^data:image\/png;base64,/, "");
+
+    const fileName = `photo_${Date.now()}.png`;
+
+    const filePath = path.join(process.cwd(), "assets", "final", fileName);
 
     fs.writeFileSync(filePath, base64Data, "base64");
 

@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld("api", {
   // =====================
 
   saveRawPhoto: (imageData) => ipcRenderer.invoke("save-raw-photo", imageData),
+  saveFinalPhoto: (imageData) =>
+    ipcRenderer.invoke("save-final-photo", imageData),
 
   // =====================
   // MENU EVENTS
