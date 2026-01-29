@@ -35,4 +35,6 @@ contextBridge.exposeInMainWorld("api", {
   onOpenPriceModal: (callback) => ipcRenderer.on("open-price-modal", callback),
 
   onOpenTimerModal: (callback) => ipcRenderer.on("open-timer-modal", callback),
+
+  getPath: () => ipcRenderer.invoke("get-path"),
 });

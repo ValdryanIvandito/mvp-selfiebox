@@ -39,6 +39,8 @@ electron-cache/
 
 assets/raw/*
 !assets/raw/.gitkeep
+assets/final/*
+!assets/final/.gitkeep
 
 # ============================
 # Environment Files

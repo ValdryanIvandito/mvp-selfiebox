@@ -219,26 +219,46 @@ addTextBtn.addEventListener("click", () => {
   }, 100);
 });
 
-addFrameBtn.addEventListener("click", () => {
+addFrameBtn.addEventListener("click", async () => {
   if (!fabricInstance) return alert("Editor not ready");
 
-  const frame = new fabric.Rect({
-    width: 780,
-    height: 580,
-    top: 5,
-    left: 5,
+  try {
+    const appPath = await window.api.getPath();
 
-    fill: "transparent",
-    stroke: "#FFD700",
-    strokeWidth: 12,
+    const framePath =
+      "file://" +
+      appPath.replace(/\\/g, "/") +
+      "/assets/frames/flower-frame.png";
 
-    selectable: false,
-    evented: false,
-  });
+    console.log("FRAME PATH:", framePath);
 
-  fabricInstance.add(frame);
-  fabricInstance.bringToFront(frame);
-  fabricInstance.renderAll();
+    fabric.Image.fromURL(
+      framePath,
+      (img) => {
+        img.scaleToWidth(800);
+
+        img.set({
+          left: 400,
+          top: 300,
+          originX: "center",
+          originY: "center",
+
+          selectable: false,
+          evented: false,
+        });
+
+        fabricInstance.add(img);
+        fabricInstance.bringToFront(img);
+        fabricInstance.renderAll();
+
+        console.log("FLOWER FRAME LOADED");
+      },
+      { crossOrigin: "anonymous" },
+    );
+  } catch (err) {
+    console.error("FRAME ERROR:", err);
+    alert("Frame load failed");
+  }
 });
 
 addHeartBtn.addEventListener("click", () => {

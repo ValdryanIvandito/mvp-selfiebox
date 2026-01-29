@@ -55,6 +55,21 @@ function createMenu() {
         },
       ],
     },
+    {
+      label: "Help",
+      submenu: [
+        {
+          label: "Developer Tools",
+          accelerator: "Ctrl+Shift+I", // optional shortcut
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.openDevTools();
+            }
+          },
+        },
+      ],
+    },
   ];
 
   const menu = Menu.buildFromTemplate(template);

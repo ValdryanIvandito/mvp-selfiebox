@@ -18,6 +18,7 @@ function ipcHandlers() {
     "get-timer",
     "save-raw-photo",
     "save-final-photo",
+    "get-path",
   ];
 
   channels.forEach((ch) => ipcMain.removeHandler(ch));
@@ -145,6 +146,11 @@ function ipcHandlers() {
       path: filePath,
       fileName,
     };
+  });
+
+  // Get app root path
+  ipcMain.handle("get-path", async () => {
+    return process.cwd();
   });
 }
 
