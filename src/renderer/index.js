@@ -50,10 +50,13 @@ const countdownText = document.getElementById("countdownText");
 const editorContainer = document.getElementById("editorContainer");
 const canvasEl = document.getElementById("fabricCanvas");
 
+const backToCameraBtn = document.getElementById("backToCameraBtn");
 const addTextBtn = document.getElementById("addTextBtn");
 const addFrameBtn = document.getElementById("addFrameBtn");
 const addHeartBtn = document.getElementById("addHeartBtn");
 const addStarBtn = document.getElementById("addStarBtn");
+const undoBtn = document.getElementById("undoBtn");
+const redoBtn = document.getElementById("redoBtn");
 const deleteObjectBtn = document.getElementById("deleteObjectBtn");
 const saveEditedBtn = document.getElementById("saveEditedBtn");
 
@@ -63,6 +66,11 @@ const saveEditedBtn = document.getElementById("saveEditedBtn");
 
 let fabricInstance = null;
 let isCapturing = false;
+
+// UNDO / REDO
+let undoStack = [];
+let redoStack = [];
+let historyLocked = false;
 
 // ===============================
 // INIT SYSTEMS
@@ -349,7 +357,22 @@ document.addEventListener("keydown", (e) => {
       fabricInstance.renderAll();
     }
   }
+
+  // CTRL + Z
+  if (e.ctrlKey && e.key === "z") {
+    e.preventDefault();
+    undo();
+  }
+
+  // CTRL + Y
+  if (e.ctrlKey && e.key === "y") {
+    e.preventDefault();
+    redo();
+  }
 });
+
+undoBtn.addEventListener("click", undo);
+redoBtn.addEventListener("click", redo);
 
 saveEditedBtn.addEventListener("click", async () => {
   if (!fabricInstance) return;
@@ -375,16 +398,19 @@ saveEditedBtn.addEventListener("click", async () => {
   }
 });
 
+backToCameraBtn.addEventListener("click", () => {
+  const confirmBack = confirm("Discard current photo and retake?");
+
+  if (confirmBack) {
+    closeEditor();
+  }
+});
+
 function openEditor(imagePath) {
   console.log("OPEN EDITOR:", imagePath);
 
-  // Hide camera
   cameraWrapper.classList.add("hidden");
-
-  // Show editor
   editorContainer.classList.remove("hidden");
-
-  const canvasEl = document.getElementById("fabricCanvas");
 
   const WIDTH = 800;
   const HEIGHT = 600;
@@ -392,15 +418,17 @@ function openEditor(imagePath) {
   canvasEl.width = WIDTH;
   canvasEl.height = HEIGHT;
 
-  // WAIT FOR DOM PAINT
   requestAnimationFrame(() => {
-    // Destroy previous instance
+    // CLEAN PREVIOUS
     if (fabricInstance) {
       fabricInstance.dispose();
       fabricInstance = null;
     }
 
-    // CREATE FABRIC INSTANCE (WAJIB)
+    undoStack = [];
+    redoStack = [];
+
+    // CREATE CANVAS
     fabricInstance = new fabric.Canvas("fabricCanvas", {
       width: WIDTH,
       height: HEIGHT,
@@ -408,32 +436,36 @@ function openEditor(imagePath) {
       preserveObjectStacking: true,
     });
 
-    // Fix offset bug
     fabricInstance.calcOffset();
+
+    // =========================
+    // HISTORY TRACKING
+    // =========================
+
+    fabricInstance.on("object:added", saveHistory);
+    fabricInstance.on("object:modified", saveHistory);
+    fabricInstance.on("object:removed", saveHistory);
 
     // =========================
     // FABRIC EVENTS
     // =========================
 
-    // Lock proportional scaling
     fabricInstance.on("object:scaling", (e) => {
       const obj = e.target;
       if (obj) obj.lockUniScaling = true;
     });
 
-    // Snap center while moving
     fabricInstance.on("object:moving", (e) => {
       const obj = e.target;
       if (!obj) return;
 
-      const centerX = fabricInstance.width / 2;
-      const centerY = fabricInstance.height / 2;
+      const centerX = WIDTH / 2;
+      const centerY = HEIGHT / 2;
 
       if (Math.abs(obj.left - centerX) < 10) obj.left = centerX;
       if (Math.abs(obj.top - centerY) < 10) obj.top = centerY;
     });
 
-    // Double click edit text
     fabricInstance.on("mouse:dblclick", (e) => {
       if (e.target && e.target.type === "i-text") {
         e.target.enterEditing();
@@ -442,12 +474,12 @@ function openEditor(imagePath) {
     });
 
     // =========================
-    // LOAD IMAGE
+    // LOAD PHOTO
     // =========================
 
     const fileUrl = `file://${imagePath.replace(/\\/g, "/")}`;
 
-    console.log("LOAD IMAGE:", fileUrl);
+    historyLocked = true;
 
     fabric.Image.fromURL(
       fileUrl,
@@ -470,10 +502,61 @@ function openEditor(imagePath) {
         fabricInstance.sendToBack(img);
         fabricInstance.renderAll();
 
-        console.log("IMAGE LOADED SUCCESS");
+        // SAVE BASE STATE
+        historyLocked = false;
+        saveHistory();
+
+        console.log("EDITOR READY");
       },
       { crossOrigin: "anonymous" },
     );
+  });
+}
+
+function saveHistory() {
+  if (!fabricInstance || historyLocked) return;
+
+  const json = fabricInstance.toJSON();
+  undoStack.push(json);
+
+  // clear redo stack when new action happens
+  redoStack = [];
+
+  // limit history memory
+  if (undoStack.length > 30) {
+    undoStack.shift();
+  }
+
+  console.log("HISTORY SAVED:", undoStack.length);
+}
+
+function undo() {
+  if (undoStack.length <= 1) return;
+
+  historyLocked = true;
+
+  const current = undoStack.pop();
+  redoStack.push(current);
+
+  const prevState = undoStack[undoStack.length - 1];
+
+  fabricInstance.loadFromJSON(prevState, () => {
+    fabricInstance.renderAll();
+    historyLocked = false;
+  });
+}
+
+function redo() {
+  if (redoStack.length === 0) return;
+
+  historyLocked = true;
+
+  const state = redoStack.pop();
+  undoStack.push(state);
+
+  fabricInstance.loadFromJSON(state, () => {
+    fabricInstance.renderAll();
+    historyLocked = false;
   });
 }
 
@@ -490,5 +573,7 @@ function closeEditor() {
     fabricInstance = null;
   }
 
+  // Clear canvas pixel memory
+  canvasEl.width = canvasEl.width;
   isCapturing = false;
 }
