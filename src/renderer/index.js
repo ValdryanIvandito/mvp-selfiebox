@@ -54,6 +54,7 @@ const addTextBtn = document.getElementById("addTextBtn");
 const addFrameBtn = document.getElementById("addFrameBtn");
 const addHeartBtn = document.getElementById("addHeartBtn");
 const addStarBtn = document.getElementById("addStarBtn");
+const deleteObjectBtn = document.getElementById("deleteObjectBtn");
 const saveEditedBtn = document.getElementById("saveEditedBtn");
 
 // ===============================
@@ -321,9 +322,39 @@ addStarBtn.addEventListener("click", () => {
   fabricInstance.renderAll();
 });
 
-saveEditedBtn.addEventListener("click", async () => {
-  if (!fabricInstance) return alert("Editor not ready");
+deleteObjectBtn.addEventListener("click", () => {
+  if (!fabricInstance) return;
 
+  const active = fabricInstance.getActiveObject();
+
+  if (!active) {
+    alert("No object selected");
+    return;
+  }
+
+  fabricInstance.remove(active);
+  fabricInstance.discardActiveObject();
+  fabricInstance.renderAll();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (!fabricInstance) return;
+
+  if (e.key === "Delete") {
+    const active = fabricInstance.getActiveObject();
+
+    if (active) {
+      fabricInstance.remove(active);
+      fabricInstance.discardActiveObject();
+      fabricInstance.renderAll();
+    }
+  }
+});
+
+saveEditedBtn.addEventListener("click", async () => {
+  if (!fabricInstance) return;
+
+  // REMOVE UI selection
   fabricInstance.discardActiveObject();
   fabricInstance.renderAll();
 
@@ -336,7 +367,7 @@ saveEditedBtn.addEventListener("click", async () => {
   const result = await window.api.saveFinalPhoto(finalImage);
 
   if (result.success) {
-    alert("Final photo saved!");
+    alert("Final photo saved!\n\n" + result.path);
 
     closeEditor();
   } else {
@@ -344,15 +375,16 @@ saveEditedBtn.addEventListener("click", async () => {
   }
 });
 
-// ==================================================
-// EDITOR CORE
-// ==================================================
-
 function openEditor(imagePath) {
   console.log("OPEN EDITOR:", imagePath);
 
+  // Hide camera
   cameraWrapper.classList.add("hidden");
+
+  // Show editor
   editorContainer.classList.remove("hidden");
+
+  const canvasEl = document.getElementById("fabricCanvas");
 
   const WIDTH = 800;
   const HEIGHT = 600;
@@ -360,46 +392,88 @@ function openEditor(imagePath) {
   canvasEl.width = WIDTH;
   canvasEl.height = HEIGHT;
 
-  if (fabricInstance) {
-    fabricInstance.dispose();
-    fabricInstance = null;
-  }
-
-  fabricInstance = new fabric.Canvas("fabricCanvas", {
-    width: WIDTH,
-    height: HEIGHT,
-    backgroundColor: "#ffffff",
-    preserveObjectStacking: true,
-  });
-
-  // Enable double click edit
-  fabricInstance.on("mouse:dblclick", (e) => {
-    if (e.target && e.target.type === "i-text") {
-      e.target.enterEditing();
-      e.target.hiddenTextarea.focus();
+  // WAIT FOR DOM PAINT
+  requestAnimationFrame(() => {
+    // Destroy previous instance
+    if (fabricInstance) {
+      fabricInstance.dispose();
+      fabricInstance = null;
     }
-  });
 
-  const fileUrl = `file://${imagePath.replace(/\\/g, "/")}`;
-
-  fabric.Image.fromURL(fileUrl, (img) => {
-    const scale = Math.min(WIDTH / img.width, HEIGHT / img.height);
-
-    img.scale(scale);
-
-    img.set({
-      left: WIDTH / 2,
-      top: HEIGHT / 2,
-      originX: "center",
-      originY: "center",
-
-      selectable: false,
-      evented: false,
+    // CREATE FABRIC INSTANCE (WAJIB)
+    fabricInstance = new fabric.Canvas("fabricCanvas", {
+      width: WIDTH,
+      height: HEIGHT,
+      backgroundColor: "#ffffff",
+      preserveObjectStacking: true,
     });
 
-    fabricInstance.add(img);
-    fabricInstance.sendToBack(img);
-    fabricInstance.renderAll();
+    // Fix offset bug
+    fabricInstance.calcOffset();
+
+    // =========================
+    // FABRIC EVENTS
+    // =========================
+
+    // Lock proportional scaling
+    fabricInstance.on("object:scaling", (e) => {
+      const obj = e.target;
+      if (obj) obj.lockUniScaling = true;
+    });
+
+    // Snap center while moving
+    fabricInstance.on("object:moving", (e) => {
+      const obj = e.target;
+      if (!obj) return;
+
+      const centerX = fabricInstance.width / 2;
+      const centerY = fabricInstance.height / 2;
+
+      if (Math.abs(obj.left - centerX) < 10) obj.left = centerX;
+      if (Math.abs(obj.top - centerY) < 10) obj.top = centerY;
+    });
+
+    // Double click edit text
+    fabricInstance.on("mouse:dblclick", (e) => {
+      if (e.target && e.target.type === "i-text") {
+        e.target.enterEditing();
+        e.target.hiddenTextarea.focus();
+      }
+    });
+
+    // =========================
+    // LOAD IMAGE
+    // =========================
+
+    const fileUrl = `file://${imagePath.replace(/\\/g, "/")}`;
+
+    console.log("LOAD IMAGE:", fileUrl);
+
+    fabric.Image.fromURL(
+      fileUrl,
+      (img) => {
+        const scale = Math.min(WIDTH / img.width, HEIGHT / img.height);
+
+        img.scale(scale);
+
+        img.set({
+          left: WIDTH / 2,
+          top: HEIGHT / 2,
+          originX: "center",
+          originY: "center",
+
+          selectable: false,
+          evented: false,
+        });
+
+        fabricInstance.add(img);
+        fabricInstance.sendToBack(img);
+        fabricInstance.renderAll();
+
+        console.log("IMAGE LOADED SUCCESS");
+      },
+      { crossOrigin: "anonymous" },
+    );
   });
 }
 
@@ -410,6 +484,11 @@ function openEditor(imagePath) {
 function closeEditor() {
   editorContainer.classList.add("hidden");
   cameraWrapper.classList.remove("hidden");
+
+  if (fabricInstance) {
+    fabricInstance.dispose();
+    fabricInstance = null;
+  }
 
   isCapturing = false;
 }
