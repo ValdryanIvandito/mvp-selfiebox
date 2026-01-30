@@ -61,11 +61,13 @@ const addFrameBtn = document.getElementById("addFrameBtn");
 const addHeartBtn = document.getElementById("addHeartBtn");
 const addStarBtn = document.getElementById("addStarBtn");
 
+const deleteObjectBtn = document.getElementById("deleteObjectBtn");
+const saveEditedBtn = document.getElementById("saveEditedBtn");
+
 const undoBtn = document.getElementById("undoBtn");
 const redoBtn = document.getElementById("redoBtn");
 
-const deleteObjectBtn = document.getElementById("deleteObjectBtn");
-const saveEditedBtn = document.getElementById("saveEditedBtn");
+const colorPicker = document.getElementById("colorPicker");
 
 // ==================================================
 // STATE
@@ -208,33 +210,6 @@ captureBtn.addEventListener("click", () => {
 // EDITOR TOOL BUTTONS
 // ==================================================
 
-addTextBtn.addEventListener("click", () => {
-  if (!fabricInstance) return alert("Editor not ready");
-
-  const text = new fabric.IText("TEXT", {
-    left: fabricInstance.getWidth() / 2,
-    top: fabricInstance.getHeight() / 2,
-
-    fill: "#FFD700",
-    fontSize: 40,
-    fontWeight: "bold",
-
-    originX: "center",
-    originY: "center",
-    editable: true,
-  });
-
-  fabricInstance.add(text);
-  fabricInstance.setActiveObject(text);
-  fabricInstance.renderAll();
-
-  setTimeout(() => {
-    text.enterEditing();
-    text.hiddenTextarea.focus();
-    text.selectAll();
-  }, 100);
-});
-
 addFrameBtn.addEventListener("click", async () => {
   if (!fabricInstance) return alert("Editor not ready");
 
@@ -271,6 +246,33 @@ addFrameBtn.addEventListener("click", async () => {
     console.error("FRAME ERROR:", err);
     alert("Frame load failed");
   }
+});
+
+addTextBtn.addEventListener("click", () => {
+  if (!fabricInstance) return alert("Editor not ready");
+
+  const text = new fabric.IText("TEXT", {
+    left: fabricInstance.getWidth() / 2,
+    top: fabricInstance.getHeight() / 2,
+
+    fill: "#FFD700",
+    fontSize: 40,
+    fontWeight: "bold",
+
+    originX: "center",
+    originY: "center",
+    editable: true,
+  });
+
+  fabricInstance.add(text);
+  fabricInstance.setActiveObject(text);
+  fabricInstance.renderAll();
+
+  setTimeout(() => {
+    text.enterEditing();
+    text.hiddenTextarea.focus();
+    text.selectAll();
+  }, 100);
 });
 
 addHeartBtn.addEventListener("click", () => {
@@ -331,6 +333,20 @@ addStarBtn.addEventListener("click", () => {
   fabricInstance.add(star);
   fabricInstance.setActiveObject(star);
   fabricInstance.renderAll();
+});
+
+colorPicker.addEventListener("input", () => {
+  if (!fabricInstance) return;
+
+  const active = fabricInstance.getActiveObject();
+
+  if (!active) return;
+
+  if ("fill" in active) {
+    active.set("fill", colorPicker.value);
+    fabricInstance.renderAll();
+    saveHistory();
+  }
 });
 
 // ==================================================
