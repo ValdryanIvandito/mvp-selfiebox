@@ -467,7 +467,9 @@ function openEditor(imagePath) {
     });
 
     fabricInstance.on("mouse:dblclick", (e) => {
-      if (e.target && e.target.type === "i-text") {
+      if (!e.target) return;
+
+      if (e.target.type === "i-text") {
         e.target.enterEditing();
         e.target.hiddenTextarea.focus();
       }
