@@ -17,15 +17,17 @@ import {
   setCapturePrice,
 } from "../utils/state.js";
 
-// ===============================
+// ==================================================
 // ELEMENT REFERENCES
-// ===============================
+// ==================================================
 
 const titleApp = document.getElementById("titleApp");
 
+// Window buttons
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 const testBtn = document.getElementById("testBtn");
 
+// Modal elements
 const backdrop = document.getElementById("modalBackdrop");
 
 const priceModal = document.getElementById("priceModal");
@@ -40,6 +42,7 @@ const saveTimerBtn = document.getElementById("saveTimerBtn");
 const priceInput = document.getElementById("priceInput");
 const timerInput = document.getElementById("timerInput");
 
+// Camera elements
 const cameraWrapper =
   document.getElementById("cameraPreview").parentElement.parentElement;
 
@@ -47,34 +50,38 @@ const video = document.getElementById("cameraPreview");
 const captureBtn = document.getElementById("captureBtn");
 const countdownText = document.getElementById("countdownText");
 
+// Editor elements
 const editorContainer = document.getElementById("editorContainer");
 const canvasEl = document.getElementById("fabricCanvas");
 
 const backToCameraBtn = document.getElementById("backToCameraBtn");
+
 const addTextBtn = document.getElementById("addTextBtn");
 const addFrameBtn = document.getElementById("addFrameBtn");
 const addHeartBtn = document.getElementById("addHeartBtn");
 const addStarBtn = document.getElementById("addStarBtn");
+
 const undoBtn = document.getElementById("undoBtn");
 const redoBtn = document.getElementById("redoBtn");
+
 const deleteObjectBtn = document.getElementById("deleteObjectBtn");
 const saveEditedBtn = document.getElementById("saveEditedBtn");
 
-// ===============================
+// ==================================================
 // STATE
-// ===============================
+// ==================================================
 
 let fabricInstance = null;
 let isCapturing = false;
 
-// UNDO / REDO
+// Undo / Redo state
 let undoStack = [];
 let redoStack = [];
 let historyLocked = false;
 
-// ===============================
+// ==================================================
 // INIT SYSTEMS
-// ===============================
+// ==================================================
 
 const modalSystem = initModalSystem({
   backdrop,
@@ -82,11 +89,12 @@ const modalSystem = initModalSystem({
   timerModal,
 });
 
+// Start camera
 startCamera(video);
 
-// ===============================
+// ==================================================
 // LOAD CONFIG
-// ===============================
+// ==================================================
 
 async function initConfig() {
   await loadTimerConfig();
@@ -118,7 +126,7 @@ testBtn.addEventListener("click", async () => {
 });
 
 // ==================================================
-// MENU → MODAL
+// MENU → MODAL EVENTS
 // ==================================================
 
 window.api.onOpenPriceModal(() => {
@@ -132,7 +140,7 @@ window.api.onOpenTimerModal(() => {
 });
 
 // ==================================================
-// PRICE EVENTS
+// PRICE MODAL EVENTS
 // ==================================================
 
 cancelPriceBtn.addEventListener("click", modalSystem.closeAllModals);
@@ -154,7 +162,7 @@ savePriceBtn.addEventListener("click", async () => {
 });
 
 // ==================================================
-// TIMER EVENTS
+// TIMER MODAL EVENTS
 // ==================================================
 
 cancelTimerBtn.addEventListener("click", modalSystem.closeAllModals);
@@ -197,7 +205,7 @@ captureBtn.addEventListener("click", () => {
 });
 
 // ==================================================
-// EDITOR BUTTONS
+// EDITOR TOOL BUTTONS
 // ==================================================
 
 addTextBtn.addEventListener("click", () => {
@@ -220,7 +228,6 @@ addTextBtn.addEventListener("click", () => {
   fabricInstance.setActiveObject(text);
   fabricInstance.renderAll();
 
-  // IMPORTANT: force editing mode (Electron fix)
   setTimeout(() => {
     text.enterEditing();
     text.hiddenTextarea.focus();
@@ -238,8 +245,6 @@ addFrameBtn.addEventListener("click", async () => {
       "file://" +
       appPath.replace(/\\/g, "/") +
       "/assets/frames/flower-frame.png";
-
-    console.log("FRAME PATH:", framePath);
 
     fabric.Image.fromURL(
       framePath,
@@ -259,8 +264,6 @@ addFrameBtn.addEventListener("click", async () => {
         fabricInstance.add(img);
         fabricInstance.bringToFront(img);
         fabricInstance.renderAll();
-
-        console.log("FLOWER FRAME LOADED");
       },
       { crossOrigin: "anonymous" },
     );
@@ -280,7 +283,7 @@ addHeartBtn.addEventListener("click", () => {
     left: fabricInstance.getWidth() / 2,
     top: fabricInstance.getHeight() / 2,
 
-    fill: "#FF1493", // PINK
+    fill: "#FF1493",
     scaleX: 0.5,
     scaleY: 0.5,
 
@@ -315,7 +318,7 @@ addStarBtn.addEventListener("click", () => {
     left: fabricInstance.getWidth() / 2,
     top: fabricInstance.getHeight() / 2,
 
-    fill: "#FFD700", // Bright gold
+    fill: "#FFD700",
     scaleX: 0.6,
     scaleY: 0.6,
 
@@ -330,27 +333,30 @@ addStarBtn.addEventListener("click", () => {
   fabricInstance.renderAll();
 });
 
+// ==================================================
+// DELETE OBJECT
+// ==================================================
+
 deleteObjectBtn.addEventListener("click", () => {
   if (!fabricInstance) return;
 
   const active = fabricInstance.getActiveObject();
-
-  if (!active) {
-    alert("No object selected");
-    return;
-  }
+  if (!active) return alert("No object selected");
 
   fabricInstance.remove(active);
   fabricInstance.discardActiveObject();
   fabricInstance.renderAll();
 });
 
+// ==================================================
+// KEYBOARD SHORTCUTS
+// ==================================================
+
 document.addEventListener("keydown", (e) => {
   if (!fabricInstance) return;
 
   if (e.key === "Delete") {
     const active = fabricInstance.getActiveObject();
-
     if (active) {
       fabricInstance.remove(active);
       fabricInstance.discardActiveObject();
@@ -358,26 +364,31 @@ document.addEventListener("keydown", (e) => {
     }
   }
 
-  // CTRL + Z
   if (e.ctrlKey && e.key === "z") {
     e.preventDefault();
     undo();
   }
 
-  // CTRL + Y
   if (e.ctrlKey && e.key === "y") {
     e.preventDefault();
     redo();
   }
 });
 
+// ==================================================
+// UNDO / REDO BUTTONS
+// ==================================================
+
 undoBtn.addEventListener("click", undo);
 redoBtn.addEventListener("click", redo);
+
+// ==================================================
+// SAVE FINAL IMAGE
+// ==================================================
 
 saveEditedBtn.addEventListener("click", async () => {
   if (!fabricInstance) return;
 
-  // REMOVE UI selection
   fabricInstance.discardActiveObject();
   fabricInstance.renderAll();
 
@@ -391,20 +402,24 @@ saveEditedBtn.addEventListener("click", async () => {
 
   if (result.success) {
     alert("Final photo saved!\n\n" + result.path);
-
     closeEditor();
   } else {
     alert("Export failed");
   }
 });
 
+// ==================================================
+// BACK TO CAMERA
+// ==================================================
+
 backToCameraBtn.addEventListener("click", () => {
   const confirmBack = confirm("Discard current photo and retake?");
-
-  if (confirmBack) {
-    closeEditor();
-  }
+  if (confirmBack) closeEditor();
 });
+
+// ==================================================
+// EDITOR INITIALIZATION
+// ==================================================
 
 function openEditor(imagePath) {
   console.log("OPEN EDITOR:", imagePath);
@@ -419,7 +434,6 @@ function openEditor(imagePath) {
   canvasEl.height = HEIGHT;
 
   requestAnimationFrame(() => {
-    // CLEAN PREVIOUS
     if (fabricInstance) {
       fabricInstance.dispose();
       fabricInstance = null;
@@ -428,7 +442,6 @@ function openEditor(imagePath) {
     undoStack = [];
     redoStack = [];
 
-    // CREATE CANVAS
     fabricInstance = new fabric.Canvas("fabricCanvas", {
       width: WIDTH,
       height: HEIGHT,
@@ -438,17 +451,9 @@ function openEditor(imagePath) {
 
     fabricInstance.calcOffset();
 
-    // =========================
-    // HISTORY TRACKING
-    // =========================
-
     fabricInstance.on("object:added", saveHistory);
     fabricInstance.on("object:modified", saveHistory);
     fabricInstance.on("object:removed", saveHistory);
-
-    // =========================
-    // FABRIC EVENTS
-    // =========================
 
     fabricInstance.on("object:scaling", (e) => {
       const obj = e.target;
@@ -467,17 +472,11 @@ function openEditor(imagePath) {
     });
 
     fabricInstance.on("mouse:dblclick", (e) => {
-      if (!e.target) return;
-
-      if (e.target.type === "i-text") {
+      if (e.target && e.target.type === "i-text") {
         e.target.enterEditing();
         e.target.hiddenTextarea.focus();
       }
     });
-
-    // =========================
-    // LOAD PHOTO
-    // =========================
 
     const fileUrl = `file://${imagePath.replace(/\\/g, "/")}`;
 
@@ -504,7 +503,6 @@ function openEditor(imagePath) {
         fabricInstance.sendToBack(img);
         fabricInstance.renderAll();
 
-        // SAVE BASE STATE
         historyLocked = false;
         saveHistory();
 
@@ -515,21 +513,21 @@ function openEditor(imagePath) {
   });
 }
 
+// ==================================================
+// HISTORY FUNCTIONS
+// ==================================================
+
 function saveHistory() {
   if (!fabricInstance || historyLocked) return;
 
   const json = fabricInstance.toJSON();
   undoStack.push(json);
 
-  // clear redo stack when new action happens
   redoStack = [];
 
-  // limit history memory
   if (undoStack.length > 30) {
     undoStack.shift();
   }
-
-  console.log("HISTORY SAVED:", undoStack.length);
 }
 
 function undo() {
@@ -540,9 +538,9 @@ function undo() {
   const current = undoStack.pop();
   redoStack.push(current);
 
-  const prevState = undoStack[undoStack.length - 1];
+  const prev = undoStack[undoStack.length - 1];
 
-  fabricInstance.loadFromJSON(prevState, () => {
+  fabricInstance.loadFromJSON(prev, () => {
     fabricInstance.renderAll();
     historyLocked = false;
   });
@@ -563,7 +561,7 @@ function redo() {
 }
 
 // ==================================================
-// CLOSE EDITOR → BACK TO CAMERA
+// CLOSE EDITOR
 // ==================================================
 
 function closeEditor() {
@@ -575,7 +573,6 @@ function closeEditor() {
     fabricInstance = null;
   }
 
-  // Clear canvas pixel memory
   canvasEl.width = canvasEl.width;
   isCapturing = false;
 }
