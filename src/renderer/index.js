@@ -4,9 +4,9 @@
 // IMPORT MODULES
 // ==================================================
 
-import { startCamera, captureFrame } from "../utils/camera.js";
-import { startCountdown } from "../utils/countdown.js";
-import { initModalSystem } from "../utils/modal.js";
+import { startCamera, captureFrame } from "../utils/camera/camera.js";
+import { startCountdown } from "../utils/camera/countdown.js";
+import { initModalSystem } from "../utils/ui/modal.js";
 
 import {
   captureTimer,
@@ -15,12 +15,29 @@ import {
   loadPriceConfig,
   capturePrice,
   setCapturePrice,
-} from "../utils/state.js";
+} from "../utils/state/state.js";
+
+import { undo, redo, saveHistory } from "../utils/editor/history.js";
+
+import {
+  addText,
+  addHeart,
+  addStar,
+  addFrame,
+  deleteActiveObject,
+} from "../utils/editor/objects.js";
+
+import {
+  openEditor,
+  closeEditor,
+  getCanvas,
+} from "../utils/editor/core.js";
 
 // ==================================================
 // ELEMENT REFERENCES
 // ==================================================
 
+// App title
 const titleApp = document.getElementById("titleApp");
 
 // Window buttons
@@ -73,13 +90,7 @@ const colorPicker = document.getElementById("colorPicker");
 // STATE
 // ==================================================
 
-let fabricInstance = null;
 let isCapturing = false;
-
-// Undo / Redo state
-let undoStack = [];
-let redoStack = [];
-let historyLocked = false;
 
 // ==================================================
 // INIT SYSTEMS
@@ -91,7 +102,7 @@ const modalSystem = initModalSystem({
   timerModal,
 });
 
-// Start camera
+// Start camera on load
 startCamera(video);
 
 // ==================================================
@@ -103,8 +114,6 @@ async function initConfig() {
   await loadPriceConfig();
 
   titleApp.textContent = `Welcome to Photobooth Services (${capturePrice})`;
-
-  console.log("CONFIG READY");
 }
 
 initConfig();
@@ -198,11 +207,17 @@ captureBtn.addEventListener("click", () => {
     const result = await window.api.saveRawPhoto(imageData);
 
     if (result.success) {
-      openEditor(result.path);
+      openEditor({
+        imagePath: result.path,
+        canvasEl,
+        cameraWrapper,
+        editorContainer,
+      });
     } else {
       alert("Save failed");
-      isCapturing = false;
     }
+
+    isCapturing = false;
   });
 });
 
@@ -211,135 +226,47 @@ captureBtn.addEventListener("click", () => {
 // ==================================================
 
 addFrameBtn.addEventListener("click", async () => {
+  const fabricInstance = getCanvas();
   if (!fabricInstance) return alert("Editor not ready");
 
-  try {
-    const appPath = await window.api.getPath();
+  const appPath = await window.api.getPath();
 
-    const framePath =
-      "file://" +
-      appPath.replace(/\\/g, "/") +
-      "/assets/frames/flower-frame.png";
+  const framePath =
+    "file://" + appPath.replace(/\\/g, "/") + "/assets/frames/flower-frame.png";
 
-    fabric.Image.fromURL(
-      framePath,
-      (img) => {
-        img.scaleToWidth(800);
-
-        img.set({
-          left: 400,
-          top: 300,
-          originX: "center",
-          originY: "center",
-
-          selectable: false,
-          evented: false,
-        });
-
-        fabricInstance.add(img);
-        fabricInstance.bringToFront(img);
-        fabricInstance.renderAll();
-      },
-      { crossOrigin: "anonymous" },
-    );
-  } catch (err) {
-    console.error("FRAME ERROR:", err);
-    alert("Frame load failed");
-  }
+  addFrame(fabricInstance, framePath);
 });
 
 addTextBtn.addEventListener("click", () => {
+  const fabricInstance = getCanvas();
+
   if (!fabricInstance) return alert("Editor not ready");
-
-  const text = new fabric.IText("TEXT", {
-    left: fabricInstance.getWidth() / 2,
-    top: fabricInstance.getHeight() / 2,
-
-    fill: "#FFD700",
-    fontSize: 40,
-    fontWeight: "bold",
-
-    originX: "center",
-    originY: "center",
-    editable: true,
-  });
-
-  fabricInstance.add(text);
-  fabricInstance.setActiveObject(text);
-  fabricInstance.renderAll();
-
-  setTimeout(() => {
-    text.enterEditing();
-    text.hiddenTextarea.focus();
-    text.selectAll();
-  }, 100);
+  addText(fabricInstance);
 });
 
 addHeartBtn.addEventListener("click", () => {
+  const fabricInstance = getCanvas();
+
   if (!fabricInstance) return alert("Editor not ready");
-
-  const heartPath =
-    "M 272 48 C 272 21.5 250.5 0 224 0 C 196.5 0 176 21.5 176 48 C 176 21.5 154.5 0 128 0 C 101.5 0 80 21.5 80 48 C 80 120 176 192 176 192 C 176 192 272 120 272 48 Z";
-
-  const heart = new fabric.Path(heartPath, {
-    left: fabricInstance.getWidth() / 2,
-    top: fabricInstance.getHeight() / 2,
-
-    fill: "#FF1493",
-    scaleX: 0.5,
-    scaleY: 0.5,
-
-    originX: "center",
-    originY: "center",
-
-    shadow: "2px 2px 8px rgba(0,0,0,0.3)",
-  });
-
-  fabricInstance.add(heart);
-  fabricInstance.setActiveObject(heart);
-  fabricInstance.renderAll();
+  addHeart(fabricInstance);
 });
 
 addStarBtn.addEventListener("click", () => {
+  const fabricInstance = getCanvas();
+
   if (!fabricInstance) return alert("Editor not ready");
-
-  const starPoints = [
-    { x: 0, y: 50 },
-    { x: 50, y: 50 },
-    { x: 65, y: 0 },
-    { x: 80, y: 50 },
-    { x: 130, y: 50 },
-    { x: 90, y: 80 },
-    { x: 110, y: 130 },
-    { x: 65, y: 100 },
-    { x: 20, y: 130 },
-    { x: 40, y: 80 },
-  ];
-
-  const star = new fabric.Polygon(starPoints, {
-    left: fabricInstance.getWidth() / 2,
-    top: fabricInstance.getHeight() / 2,
-
-    fill: "#FFD700",
-    scaleX: 0.6,
-    scaleY: 0.6,
-
-    originX: "center",
-    originY: "center",
-
-    shadow: "2px 2px 8px rgba(0,0,0,0.3)",
-  });
-
-  fabricInstance.add(star);
-  fabricInstance.setActiveObject(star);
-  fabricInstance.renderAll();
+  addStar(fabricInstance);
 });
 
+// ==================================================
+// COLOR PICKER
+// ==================================================
+
 colorPicker.addEventListener("input", () => {
+  const fabricInstance = getCanvas();
   if (!fabricInstance) return;
 
   const active = fabricInstance.getActiveObject();
-
   if (!active) return;
 
   if ("fill" in active) {
@@ -354,14 +281,11 @@ colorPicker.addEventListener("input", () => {
 // ==================================================
 
 deleteObjectBtn.addEventListener("click", () => {
+  const fabricInstance = getCanvas();
   if (!fabricInstance) return;
 
-  const active = fabricInstance.getActiveObject();
-  if (!active) return alert("No object selected");
-
-  fabricInstance.remove(active);
-  fabricInstance.discardActiveObject();
-  fabricInstance.renderAll();
+  const success = deleteActiveObject(fabricInstance);
+  if (!success) alert("No object selected");
 });
 
 // ==================================================
@@ -369,15 +293,11 @@ deleteObjectBtn.addEventListener("click", () => {
 // ==================================================
 
 document.addEventListener("keydown", (e) => {
+  const fabricInstance = getCanvas();
   if (!fabricInstance) return;
 
   if (e.key === "Delete") {
-    const active = fabricInstance.getActiveObject();
-    if (active) {
-      fabricInstance.remove(active);
-      fabricInstance.discardActiveObject();
-      fabricInstance.renderAll();
-    }
+    deleteActiveObject(fabricInstance);
   }
 
   if (e.ctrlKey && e.key === "z") {
@@ -403,6 +323,7 @@ redoBtn.addEventListener("click", redo);
 // ==================================================
 
 saveEditedBtn.addEventListener("click", async () => {
+  const fabricInstance = getCanvas();
   if (!fabricInstance) return;
 
   fabricInstance.discardActiveObject();
@@ -418,7 +339,12 @@ saveEditedBtn.addEventListener("click", async () => {
 
   if (result.success) {
     alert("Final photo saved!\n\n" + result.path);
-    closeEditor();
+
+    closeEditor({
+      canvasEl,
+      cameraWrapper,
+      editorContainer,
+    });
   } else {
     alert("Export failed");
   }
@@ -430,165 +356,13 @@ saveEditedBtn.addEventListener("click", async () => {
 
 backToCameraBtn.addEventListener("click", () => {
   const confirmBack = confirm("Discard current photo and retake?");
-  if (confirmBack) closeEditor();
-});
+  if (!confirmBack) return;
 
-// ==================================================
-// EDITOR INITIALIZATION
-// ==================================================
-
-function openEditor(imagePath) {
-  console.log("OPEN EDITOR:", imagePath);
-
-  cameraWrapper.classList.add("hidden");
-  editorContainer.classList.remove("hidden");
-
-  const WIDTH = 800;
-  const HEIGHT = 600;
-
-  canvasEl.width = WIDTH;
-  canvasEl.height = HEIGHT;
-
-  requestAnimationFrame(() => {
-    if (fabricInstance) {
-      fabricInstance.dispose();
-      fabricInstance = null;
-    }
-
-    undoStack = [];
-    redoStack = [];
-
-    fabricInstance = new fabric.Canvas("fabricCanvas", {
-      width: WIDTH,
-      height: HEIGHT,
-      backgroundColor: "#ffffff",
-      preserveObjectStacking: true,
-    });
-
-    fabricInstance.calcOffset();
-
-    fabricInstance.on("object:added", saveHistory);
-    fabricInstance.on("object:modified", saveHistory);
-    fabricInstance.on("object:removed", saveHistory);
-
-    fabricInstance.on("object:scaling", (e) => {
-      const obj = e.target;
-      if (obj) obj.lockUniScaling = true;
-    });
-
-    fabricInstance.on("object:moving", (e) => {
-      const obj = e.target;
-      if (!obj) return;
-
-      const centerX = WIDTH / 2;
-      const centerY = HEIGHT / 2;
-
-      if (Math.abs(obj.left - centerX) < 10) obj.left = centerX;
-      if (Math.abs(obj.top - centerY) < 10) obj.top = centerY;
-    });
-
-    fabricInstance.on("mouse:dblclick", (e) => {
-      if (e.target && e.target.type === "i-text") {
-        e.target.enterEditing();
-        e.target.hiddenTextarea.focus();
-      }
-    });
-
-    const fileUrl = `file://${imagePath.replace(/\\/g, "/")}`;
-
-    historyLocked = true;
-
-    fabric.Image.fromURL(
-      fileUrl,
-      (img) => {
-        const scale = Math.min(WIDTH / img.width, HEIGHT / img.height);
-
-        img.scale(scale);
-
-        img.set({
-          left: WIDTH / 2,
-          top: HEIGHT / 2,
-          originX: "center",
-          originY: "center",
-
-          selectable: false,
-          evented: false,
-        });
-
-        fabricInstance.add(img);
-        fabricInstance.sendToBack(img);
-        fabricInstance.renderAll();
-
-        historyLocked = false;
-        saveHistory();
-
-        console.log("EDITOR READY");
-      },
-      { crossOrigin: "anonymous" },
-    );
+  closeEditor({
+    canvasEl,
+    cameraWrapper,
+    editorContainer,
   });
-}
 
-// ==================================================
-// HISTORY FUNCTIONS
-// ==================================================
-
-function saveHistory() {
-  if (!fabricInstance || historyLocked) return;
-
-  const json = fabricInstance.toJSON();
-  undoStack.push(json);
-
-  redoStack = [];
-
-  if (undoStack.length > 30) {
-    undoStack.shift();
-  }
-}
-
-function undo() {
-  if (undoStack.length <= 1) return;
-
-  historyLocked = true;
-
-  const current = undoStack.pop();
-  redoStack.push(current);
-
-  const prev = undoStack[undoStack.length - 1];
-
-  fabricInstance.loadFromJSON(prev, () => {
-    fabricInstance.renderAll();
-    historyLocked = false;
-  });
-}
-
-function redo() {
-  if (redoStack.length === 0) return;
-
-  historyLocked = true;
-
-  const state = redoStack.pop();
-  undoStack.push(state);
-
-  fabricInstance.loadFromJSON(state, () => {
-    fabricInstance.renderAll();
-    historyLocked = false;
-  });
-}
-
-// ==================================================
-// CLOSE EDITOR
-// ==================================================
-
-function closeEditor() {
-  editorContainer.classList.add("hidden");
-  cameraWrapper.classList.remove("hidden");
-
-  if (fabricInstance) {
-    fabricInstance.dispose();
-    fabricInstance = null;
-  }
-
-  canvasEl.width = canvasEl.width;
   isCapturing = false;
-}
+});
