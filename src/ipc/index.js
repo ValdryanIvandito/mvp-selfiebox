@@ -10,7 +10,6 @@ function ipcHandlers() {
   // ============================
 
   const channels = [
-    "toggle-fullscreen",
     "ping",
     "save-price",
     "get-price",
@@ -22,21 +21,6 @@ function ipcHandlers() {
   ];
 
   channels.forEach((ch) => ipcMain.removeHandler(ch));
-
-  // ============================
-  // WINDOW CONTROL
-  // ============================
-
-  ipcMain.handle("toggle-fullscreen", async () => {
-    const win = BrowserWindow.getFocusedWindow();
-
-    if (!win) return false;
-
-    const state = win.isFullScreen();
-    win.setFullScreen(!state);
-
-    return !state;
-  });
 
   // ============================
   // TEST

@@ -37,11 +37,11 @@ electron-cache/
 # Photobooth Captured Photos
 # ============================
 
-# assets/raw/*
-# assets/final/*
+assets/raw/*
+assets/final/*
 
-# !assets/raw/
-# !assets/final/
+!assets/raw/
+!assets/final/
 
 # ============================
 # Environment Files

@@ -12,30 +12,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
   </head>
 
-  <body class="bg-gray-100 font-sans">
-    <div class="p-4">
-      <h1 id="titleApp" class="text-2xl font-bold mb-4"></h1>
-
-      <!-- MAIN CONTROLS -->
-      <div class="flex flex-wrap gap-3">
-        <button
-          id="fullscreenBtn"
-          class="bg-blue-600 text-white px-5 py-3 rounded-lg shadow hover:bg-blue-700 active:scale-95 transition"
-        >
-          TOGGLE FULLSCREEN
-        </button>
-
-        <button
-          id="testBtn"
-          class="bg-green-600 text-white px-5 py-3 rounded-lg shadow hover:bg-green-700 active:scale-95 transition"
-        >
-          TEST IPC
-        </button>
-      </div>
+  <body class="bg-gray-800 font-sans">
+    <!-- HEADER -->
+    <div class="p-4 flex justify-between items-center">
+      <h1 id="titleApp" class="text-2xl text-white font-bold"></h1>
+      <button
+        id="testBtn"
+        class="bg-green-600 text-white px-5 py-2 rounded-lg shadow hover:bg-green-700 active:scale-95 transition"
+      >
+        TEST IPC
+      </button>
     </div>
 
     <!-- CAMERA PREVIEW -->
-    <div class="mt-2 flex flex-col items-center gap-3">
+    <div class="p-4 flex flex-col items-center gap-8">
       <!-- VIDEO WRAPPER -->
       <div class="relative flex justify-center items-center">
         <!-- VIDEO -->
@@ -43,7 +33,7 @@
           id="cameraPreview"
           autoplay
           playsinline
-          class="w-[640px] h-[480px] bg-black rounded-xl shadow-lg object-cover"
+          class="w-[720px] h-[480px] bg-black rounded-xl shadow-lg object-contain"
         ></video>
         <!-- COUNTDOWN OVERLAY -->
         <div
@@ -64,90 +54,110 @@
     <!-- EDITOR PREVIEW -->
     <div
       id="editorContainer"
-      class="hidden flex flex-col items-center justify-center p-4 bg-gray-200"
+      class="hidden bg-gray-900 flex flex-col select-none min-h-screen"
     >
-      <canvas id="fabricCanvas"></canvas>
-      <div
-        class="fixed right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 bg-gray-900 p-4 rounded-2xl shadow-xl"
-      >
-        <!-- BACK BUTTON -->
+      <!-- TOP BAR -->
+      <div class="p-4 bg-gray-800 flex items-center justify-between">
         <button
           id="backToCameraBtn"
-          class="bg-gray-500 hover:bg-gray-600 active:scale-95 text-white font-semibold px-6 py-4 rounded-xl transition"
+          class="bg-gray-600 hover:bg-gray-700 active:scale-95 text-white px-5 py-2 rounded-lg font-semibold transition"
         >
-          BACK
-        </button>
-        <button
-          id="addTextBtn"
-          class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold px-6 py-4 rounded-xl transition"
-        >
-          ADD TEXT
+          ← Back
         </button>
 
-        <!-- TEXT COLOR -->
-        <div class="flex flex-col gap-2 bg-gray-800 p-3 rounded-xl">
-          <label class="text-white text-sm font-semibold text-center">
-            CHANGE COLOR
-          </label>
-
-          <input
-            id="colorPicker"
-            type="color"
-            value="#FFD700"
-            class="w-full h-10 rounded cursor-pointer"
-          />
-        </div>
-
-        <button
-          id="addFrameBtn"
-          class="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-semibold px-6 py-4 rounded-xl transition"
-        >
-          ADD FRAME
-        </button>
-
-        <button
-          id="addStarBtn"
-          class="bg-yellow-600 hover:bg-purple-700 active:scale-95 text-white font-semibold px-6 py-4 rounded-xl transition"
-        >
-          ADD STAR
-        </button>
-
-        <button
-          id="addHeartBtn"
-          class="bg-pink-600 hover:bg-purple-700 active:scale-95 text-white font-semibold px-6 py-4 rounded-xl transition"
-        >
-          ADD HEART
-        </button>
-
-        <!-- UNDO -->
-        <button
-          id="undoBtn"
-          class="bg-gray-600 hover:bg-gray-700 active:scale-95 text-white font-semibold px-6 py-4 rounded-xl transition"
-        >
-          UNDO
-        </button>
-
-        <!-- REDO -->
-        <button
-          id="redoBtn"
-          class="bg-gray-600 hover:bg-gray-700 active:scale-95 text-white font-semibold px-6 py-4 rounded-xl transition"
-        >
-          REDO
-        </button>
-
-        <button
-          id="deleteObjectBtn"
-          class="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold px-6 py-4 rounded-xl transition"
-        >
-          DELETE
-        </button>
-
+        <!-- SAVE BUTTON -->
         <button
           id="saveEditedBtn"
-          class="bg-green-600 hover:bg-green-700 active:scale-95 text-white font-semibold px-6 py-4 rounded-xl transition"
+          class="bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold px-8 py-2 rounded-lg shadow-xl transition"
         >
           SAVE PHOTO
         </button>
+      </div>
+
+      <!-- MAIN EDITOR AREA -->
+      <div class="flex justify-between items-center relative overflow-hidden">
+        <!-- TOOL BAR -->
+        <div class="flex flex-col justify-center items-center gap-5 p-4">
+          <button
+            id="addFrameBtn"
+            class="p-4 w-20 h-20 bg-gray-700 hover:bg-gray-600 active:scale-95 text-center text-white rounded-xl font-semibold transition"
+          >
+            🖼 Frame
+          </button>
+
+          <button
+            id="addTextBtn"
+            class="p-4 w-20 h-20 bg-gray-700 hover:bg-gray-600 active:scale-95 text-center text-white rounded-xl font-semibold transition"
+          >
+            ✏ Text
+          </button>
+
+          <button
+            id="addHeartBtn"
+            class="p-4 w-20 h-20 bg-gray-700 hover:bg-gray-600 active:scale-95 text-center text-white rounded-xl font-semibold transition"
+          >
+            ❤️ Heart
+          </button>
+
+          <button
+            id="addStarBtn"
+            class="p-4 w-20 h-20 bg-gray-700 hover:bg-gray-600 active:scale-95 text-center text-white rounded-xl font-semibold transition"
+          >
+            ⭐ Star
+          </button>
+        </div>
+
+        <!-- CANVAS AREA -->
+        <div class="flex justify-center items-center max-w-[720px]">
+          <canvas id="fabricCanvas" width="720" height="480"></canvas>
+        </div>
+
+        <!-- RIGHT TOOL PANEL -->
+        <div class="w-20 flex flex-col justify-center items-center gap-5">
+          <!-- COLOR PICKER -->
+          <div class="flex flex-col items-center gap-2">
+            <span class="text-white text-xs font-semibold"> Color </span>
+            <input
+              id="colorPicker"
+              type="color"
+              value="#FFD700"
+              class="w-11 h-11 rounded-full cursor-pointer border-none bg-transparent"
+            />
+          </div>
+
+          <!-- DIVIDER -->
+          <div class="w-10 h-[1px]"></div>
+
+          <!-- UNDO -->
+          <button
+            id="undoBtn"
+            title="Undo"
+            class="bg-gray-700 hover:bg-gray-600 active:scale-95 text-white w-12 h-12 flex items-center justify-center rounded-xl transition"
+          >
+            ↶
+          </button>
+
+          <!-- REDO -->
+          <button
+            id="redoBtn"
+            title="Redo"
+            class="bg-gray-700 hover:bg-gray-600 active:scale-95 text-white w-12 h-12 flex items-center justify-center rounded-xl transition"
+          >
+            ↷
+          </button>
+
+          <!-- DIVIDER -->
+          <div class="w-10 h-[1px]"></div>
+
+          <!-- DELETE -->
+          <button
+            id="deleteObjectBtn"
+            title="Delete Object"
+            class="bg-red-600 hover:bg-red-700 active:scale-95 text-white w-12 h-12 flex items-center justify-center rounded-xl transition"
+          >
+            🗑
+          </button>
+        </div>
       </div>
     </div>
 

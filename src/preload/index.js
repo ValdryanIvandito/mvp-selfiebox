@@ -8,7 +8,6 @@ contextBridge.exposeInMainWorld("api", {
   // =====================
 
   ping: () => ipcRenderer.invoke("ping"),
-  toggleFullscreen: () => ipcRenderer.invoke("toggle-fullscreen"),
 
   // =====================
   // CONFIG

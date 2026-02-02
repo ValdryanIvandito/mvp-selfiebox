@@ -27,11 +27,7 @@ import {
   deleteActiveObject,
 } from "../utils/editor/objects.js";
 
-import {
-  openEditor,
-  closeEditor,
-  getCanvas,
-} from "../utils/editor/core.js";
+import { openEditor, closeEditor, getCanvas } from "../utils/editor/core.js";
 
 // ==================================================
 // ELEMENT REFERENCES
@@ -41,7 +37,6 @@ import {
 const titleApp = document.getElementById("titleApp");
 
 // Window buttons
-const fullscreenBtn = document.getElementById("fullscreenBtn");
 const testBtn = document.getElementById("testBtn");
 
 // Modal elements
@@ -113,19 +108,10 @@ async function initConfig() {
   await loadTimerConfig();
   await loadPriceConfig();
 
-  titleApp.textContent = `Welcome to Photobooth Services (${capturePrice})`;
+  titleApp.textContent = `Welcome to Photobooth Services (IDR ${capturePrice})`;
 }
 
 initConfig();
-
-// ==================================================
-// WINDOW CONTROL
-// ==================================================
-
-fullscreenBtn.addEventListener("click", async () => {
-  const state = await window.api.toggleFullscreen();
-  alert(state ? "Fullscreen mode" : "Window mode");
-});
 
 // ==================================================
 // TEST IPC
@@ -332,7 +318,7 @@ saveEditedBtn.addEventListener("click", async () => {
   const finalImage = fabricInstance.toDataURL({
     format: "png",
     quality: 1,
-    multiplier: 2,
+    multiplier: 1,
   });
 
   const result = await window.api.saveFinalPhoto(finalImage);

@@ -22,14 +22,12 @@ export function openEditor({
   cameraWrapper,
   editorContainer,
 }) {
-  console.log("OPEN EDITOR:", imagePath);
-
   // UI toggle
   cameraWrapper.classList.add("hidden");
   editorContainer.classList.remove("hidden");
 
-  const WIDTH = 800;
-  const HEIGHT = 600;
+  const WIDTH = 720;
+  const HEIGHT = 480;
 
   canvasEl.width = WIDTH;
   canvasEl.height = HEIGHT;
@@ -45,7 +43,6 @@ export function openEditor({
     fabricInstance = new fabric.Canvas("fabricCanvas", {
       width: WIDTH,
       height: HEIGHT,
-      backgroundColor: "#ffffff",
       preserveObjectStacking: true,
     });
 
@@ -113,8 +110,6 @@ export function openEditor({
 
         // Save base state
         saveHistory();
-
-        console.log("EDITOR READY");
       },
       { crossOrigin: "anonymous" },
     );

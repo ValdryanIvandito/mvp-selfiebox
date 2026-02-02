@@ -3,7 +3,11 @@
 export async function startCamera(videoEl) {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
+      video: {
+        width: { ideal: 720 },
+        height: { ideal: 480 },
+        aspectRatio: 16 / 9,
+      },
       audio: false,
     });
 
@@ -22,7 +26,7 @@ export function captureFrame(videoEl) {
 
   const ctx = canvas.getContext("2d");
 
-  ctx.drawImage(videoEl, 0, 0);
+  ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
   return canvas.toDataURL("image/png");
 }
