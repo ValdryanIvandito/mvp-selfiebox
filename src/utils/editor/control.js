@@ -48,8 +48,15 @@ export function initEditorControls({
     const canvas = getCanvas();
     if (!canvas) return;
 
-    // Prevent conflict while editing text
-    if (canvas.getActiveObject()?.isEditing) return;
+    const active = canvas.getActiveObject();
+
+    // ===============================
+    // BLOCK SHORTCUT WHEN TEXT EDITING
+    // ===============================
+
+    if (active && active.type === "i-text" && active.isEditing) {
+      return;
+    }
 
     // DELETE
     if (e.key === "Delete") {

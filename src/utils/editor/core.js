@@ -47,6 +47,8 @@ export function openEditor({
     });
 
     fabricInstance.calcOffset();
+    fabricInstance.upperCanvasEl.tabIndex = 0;
+    fabricInstance.upperCanvasEl.focus();
 
     // Init undo / redo
     initHistory(fabricInstance);
@@ -73,11 +75,17 @@ export function openEditor({
       if (Math.abs(obj.top - centerY) < 10) obj.top = centerY;
     });
 
-    // Double click edit text
     fabricInstance.on("mouse:dblclick", (e) => {
       if (e.target && e.target.type === "i-text") {
-        e.target.enterEditing();
-        e.target.hiddenTextarea.focus();
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            e.target.enterEditing();
+
+            if (e.target.hiddenTextarea) {
+              e.target.hiddenTextarea.focus();
+            }
+          }, 20);
+        });
       }
     });
 

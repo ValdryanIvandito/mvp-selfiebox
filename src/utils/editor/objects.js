@@ -9,7 +9,7 @@ export function addText(fabricInstance) {
     left: fabricInstance.getWidth() / 2,
     top: fabricInstance.getHeight() / 2,
 
-    fill: "#FFD700",
+    fill: "#000000",
     fontSize: 40,
     fontWeight: "bold",
 
@@ -22,12 +22,15 @@ export function addText(fabricInstance) {
   fabricInstance.setActiveObject(text);
   fabricInstance.renderAll();
 
-  // Electron focus fix
-  setTimeout(() => {
-    text.enterEditing();
-    text.hiddenTextarea.focus();
-    text.selectAll();
-  }, 100);
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      if (!text.hiddenTextarea) return;
+
+      text.enterEditing();
+      text.hiddenTextarea.focus();
+      text.selectAll();
+    }, 30);
+  });
 }
 
 // ===============================

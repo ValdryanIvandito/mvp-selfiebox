@@ -2,7 +2,7 @@
 
 const path = require("path");
 const fs = require("fs");
-const { ipcMain, BrowserWindow } = require("electron");
+const { ipcMain } = require("electron");
 
 function ipcHandlers() {
   // ============================

@@ -12,7 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
   </head>
 
-  <body class="bg-gray-800 font-sans">
+  <body class="bg-gray-900 font-sans">
     <!-- HEADER -->
     <div class="p-4 flex justify-between items-center">
       <h1 id="titleApp" class="text-2xl text-white font-bold"></h1>
@@ -25,7 +25,7 @@
     </div>
 
     <!-- CAMERA PREVIEW -->
-    <div class="p-4 flex flex-col items-center gap-8">
+    <div class="p-4 mt-4 flex flex-col items-center gap-8">
       <!-- VIDEO WRAPPER -->
       <div class="relative flex justify-center items-center">
         <!-- VIDEO -->
@@ -54,10 +54,10 @@
     <!-- EDITOR PREVIEW -->
     <div
       id="editorContainer"
-      class="hidden bg-gray-900 flex flex-col select-none min-h-screen"
+      class="hidden flex flex-col select-none min-h-screen"
     >
       <!-- TOP BAR -->
-      <div class="p-4 bg-gray-800 flex items-center justify-between">
+      <div class="p-4 flex items-center justify-between">
         <button
           id="backToCameraBtn"
           class="bg-gray-600 hover:bg-gray-700 active:scale-95 text-white px-5 py-2 rounded-lg font-semibold transition"
@@ -75,7 +75,9 @@
       </div>
 
       <!-- MAIN EDITOR AREA -->
-      <div class="flex justify-between items-center relative overflow-hidden">
+      <div
+        class="flex mt-4 justify-between items-center relative overflow-hidden"
+      >
         <!-- TOOL BAR -->
         <div class="flex flex-col justify-center items-center gap-5 p-4">
           <button
