@@ -10,82 +10,116 @@
 
     <!-- Fabric.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
-
-    <style>
-      .presetBtn {
-        background: #374151;
-        color: white;
-        padding: 10px 18px;
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 600;
-        white-space: nowrap;
-        transition: 0.15s;
-      }
-
-      .presetBtn:hover {
-        background: #4b5563;
-      }
-
-      .presetBtn:active {
-        transform: scale(0.95);
-      }
-
-      /* Hide scrollbar */
-      .scrollbar-hide::-webkit-scrollbar {
-        display: none;
-      }
-    </style>
   </head>
 
   <body class="bg-gray-900 font-sans">
-    <!-- HEADER -->
-    <div class="p-4 flex justify-between items-center">
-      <h1 id="titleApp" class="text-2xl text-white font-bold"></h1>
+    <!-- ========================= -->
+    <!-- WELCOME VIEW -->
+    <!-- ========================= -->
+
+    <div
+      id="welcomeView"
+      class="flex flex-col items-center justify-center min-h-screen gap-6"
+    >
+      <h1 id="welcomeMsg" class="text-3xl text-white font-bold"></h1>
+
       <button
         id="testBtn"
-        class="bg-green-600 text-white px-5 py-2 rounded-lg shadow hover:bg-green-700 active:scale-95 transition"
+        class="bg-green-600 hover:bg-green-700 active:scale-95 transition text-white px-6 py-2 rounded-lg text-lg text-bold"
       >
         TEST IPC
       </button>
+
+      <button
+        id="welcomeNextBtn"
+        class="bg-blue-600 hover:bg-blue-700 active:scale-95 transition text-white px-6 py-2 rounded-lg text-lg text-bold"
+      >
+        NEXT →
+      </button>
     </div>
 
-    <!-- CAMERA PREVIEW -->
-    <div class="p-4 mt-4 flex flex-col items-center gap-8">
-      <!-- VIDEO WRAPPER -->
-      <div class="relative flex justify-center items-center">
-        <!-- VIDEO -->
+    <!-- ========================= -->
+    <!-- PAYMENT VIEW -->
+    <!-- ========================= -->
+
+    <div
+      id="paymentView"
+      class="flex flex-col justify-center items-start gap-4"
+    >
+      <div
+        class="w-full h-full pl-4 pt-4 flex justify-start items-center mb-56"
+      >
+        <button
+          id="paymentBackBtn"
+          class="bg-gray-600 hover:bg-gray-700 active:scale-95 text-white px-5 py-2 rounded-lg font-semibold transition"
+        >
+          ← Back
+        </button>
+      </div>
+
+      <div class="w-full flex flex-col justify-center items-center gap-4">
+        <h1 id="priceMsg" class="text-3xl text-white font-bold"></h1>
+        <button
+          id="paymentNextBtn"
+          class="bg-blue-600 hover:bg-blue-700 active:scale-95 transition text-white px-6 py-2 rounded-lg text-lg text-bold"
+        >
+          PAY
+        </button>
+      </div>
+
+      <div class="w-full h-28 flex flex-col justify-center items-center"></div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- CAMERA VIEW -->
+    <!-- ========================= -->
+
+    <div
+      id="cameraView"
+      class="hidden flex flex-col justify-center items-center gap-4"
+    >
+      <div class="w-full pl-4 pt-4 flex justify-start items-center">
+        <button
+          id="cameraBackBtn"
+          class="bg-gray-600 hover:bg-gray-700 active:scale-95 text-white px-5 py-2 rounded-lg font-semibold transition"
+        >
+          ← Back
+        </button>
+      </div>
+
+      <div class="relative">
         <video
           id="cameraPreview"
           autoplay
           playsinline
           class="w-[720px] h-[480px] bg-black rounded-xl shadow-lg object-contain"
         ></video>
-        <!-- COUNTDOWN OVERLAY -->
+
         <div
           id="countdownText"
-          class="absolute text-8xl font-bold text-red-600 hidden flex items-center justify-center"
+          class="absolute inset-0 flex items-center justify-center text-8xl font-bold text-red-600 hidden"
         >
           3
         </div>
       </div>
+
       <button
         id="captureBtn"
-        class="bg-red-600 text-white px-6 py-2 rounded-xl shadow hover:bg-red-700 active:scale-95 transition"
+        class="bg-red-600 hover:bg-red-700 active:scale-95 transition text-white px-8 py-3 rounded-xl font-bold"
       >
         CAPTURE PHOTO
       </button>
     </div>
 
-    <!-- EDITOR PREVIEW -->
-    <div
-      id="editorContainer"
-      class="hidden flex flex-col select-none min-h-screen"
-    >
+    <!-- ========================= -->
+    <!-- EDITOR VIEW -->
+    <!-- ========================= -->
+
+    <div id="editorView" class="hidden flex flex-col select-none min-h-screen">
       <!-- TOP BAR -->
       <div class="pt-4 px-4 flex items-center justify-between">
         <button
-          id="backToCameraBtn"
+          id="editorBackBtn"
           class="bg-gray-600 hover:bg-gray-700 active:scale-95 text-white px-5 py-2 rounded-lg font-semibold transition"
         >
           ← Back
@@ -134,29 +168,50 @@
         </div>
 
         <div class="flex-col justify-center items-center">
-          <!-- FILTER PRESET BAR -->
+          <!-- FILTER BAR -->
           <div
             id="filterBar"
-            class="flex justify-center gap-3 px-4 py-2 overflow-x-auto scrollbar-hide mb-4"
+            class="flex justify-center items-center gap-3 px-4 py-2 mb-4"
           >
-            <button data-filter="bw" class="filterBtn presetBtn w-24">
+            <!-- PRESET BUTTONS -->
+            <button
+              data-filter="bw"
+              class="filterBtn bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-4 py-2 rounded-full whitespace-nowrap transition active:scale-95 w-24"
+            >
               B&W
             </button>
-            <button data-filter="sepia" class="filterBtn presetBtn w-24">
+
+            <button
+              data-filter="sepia"
+              class="filterBtn bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-4 py-2 rounded-full whitespace-nowrap transition active:scale-95 w-24"
+            >
               Sepia
             </button>
-            <button data-filter="polaroid" class="filterBtn presetBtn w-24">
+
+            <button
+              data-filter="polaroid"
+              class="filterBtn bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-4 py-2 rounded-full whitespace-nowrap transition active:scale-95 w-24"
+            >
               Polaroid
             </button>
-            <button data-filter="warm" class="filterBtn presetBtn w-24">
+
+            <button
+              data-filter="warm"
+              class="filterBtn bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-4 py-2 rounded-full whitespace-nowrap transition active:scale-95 w-24"
+            >
               Warm
             </button>
-            <button data-filter="cool" class="filterBtn presetBtn w-24">
+
+            <button
+              data-filter="cool"
+              class="filterBtn bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-4 py-2 rounded-full whitespace-nowrap transition active:scale-95 w-24"
+            >
               Cool
             </button>
+
             <button
               data-filter="none"
-              class="filterBtn presetBtn bg-red-600 w-24"
+              class="filterBtn bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-full whitespace-nowrap transition active:scale-95 w-24"
             >
               ✖ Reset
             </button>
@@ -172,7 +227,7 @@
         <div class="w-20 flex flex-col justify-center items-center gap-5">
           <!-- COLOR PICKER -->
           <div class="flex flex-col items-center gap-2">
-            <span class="text-white text-xs font-semibold"> Color </span>
+            <span class="text-white text-sm font-semibold"> Color </span>
             <input
               id="colorPicker"
               type="color"

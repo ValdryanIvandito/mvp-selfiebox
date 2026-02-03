@@ -28,22 +28,62 @@ import {
 } from "../utils/editor/objects.js";
 
 import { openEditor, closeEditor, getCanvas } from "../utils/editor/core.js";
-
 import { applyPresetFilter } from "../utils/editor/filters.js";
+
+// ==================================================
+// VIEW MANAGER (TAILWIND)
+// ==================================================
+
+function showView(viewId) {
+  document.getElementById("welcomeView").classList.add("hidden");
+  document.getElementById("paymentView").classList.add("hidden");
+  document.getElementById("cameraView").classList.add("hidden");
+  document.getElementById("editorView").classList.add("hidden");
+
+  document.getElementById(viewId).classList.remove("hidden");
+}
 
 // ==================================================
 // ELEMENT REFERENCES
 // ==================================================
 
-// App title
-const titleApp = document.getElementById("titleApp");
+// All Views
+const welcomeView = document.getElementById("welcomeView");
+const paymentView = document.getElementById("paymentView");
+const cameraView = document.getElementById("cameraView");
+const editorView = document.getElementById("editorView");
 
-// Window buttons
+// Welcome View
+const welcomeMsg = document.getElementById("welcomeMsg");
 const testBtn = document.getElementById("testBtn");
+const welcomeNextBtn = document.getElementById("welcomeNextBtn");
 
-// Modal elements
+// Payment View
+const priceMsg = document.getElementById("priceMsg");
+const paymentBackBtn = document.getElementById("paymentBackBtn");
+const paymentNextBtn = document.getElementById("paymentNextBtn");
+
+// Camera View
+const cameraBackBtn = document.getElementById("cameraBackBtn");
+const video = document.getElementById("cameraPreview");
+const countdownText = document.getElementById("countdownText");
+const captureBtn = document.getElementById("captureBtn");
+
+// Editor View
+const editorBackBtn = document.getElementById("editorBackBtn");
+const saveEditedBtn = document.getElementById("saveEditedBtn");
+const canvasEl = document.getElementById("fabricCanvas");
+const addFrameBtn = document.getElementById("addFrameBtn");
+const addTextBtn = document.getElementById("addTextBtn");
+const addHeartBtn = document.getElementById("addHeartBtn");
+const addStarBtn = document.getElementById("addStarBtn");
+const colorPicker = document.getElementById("colorPicker");
+const undoBtn = document.getElementById("undoBtn");
+const redoBtn = document.getElementById("redoBtn");
+const deleteObjectBtn = document.getElementById("deleteObjectBtn");
+
+// Modal View
 const backdrop = document.getElementById("modalBackdrop");
-
 const priceModal = document.getElementById("priceModal");
 const timerModal = document.getElementById("timerModal");
 
@@ -55,33 +95,6 @@ const saveTimerBtn = document.getElementById("saveTimerBtn");
 
 const priceInput = document.getElementById("priceInput");
 const timerInput = document.getElementById("timerInput");
-
-// Camera elements
-const cameraWrapper =
-  document.getElementById("cameraPreview").parentElement.parentElement;
-
-const video = document.getElementById("cameraPreview");
-const captureBtn = document.getElementById("captureBtn");
-const countdownText = document.getElementById("countdownText");
-
-// Editor elements
-const editorContainer = document.getElementById("editorContainer");
-const canvasEl = document.getElementById("fabricCanvas");
-
-const backToCameraBtn = document.getElementById("backToCameraBtn");
-
-const addTextBtn = document.getElementById("addTextBtn");
-const addFrameBtn = document.getElementById("addFrameBtn");
-const addHeartBtn = document.getElementById("addHeartBtn");
-const addStarBtn = document.getElementById("addStarBtn");
-
-const deleteObjectBtn = document.getElementById("deleteObjectBtn");
-const saveEditedBtn = document.getElementById("saveEditedBtn");
-
-const undoBtn = document.getElementById("undoBtn");
-const redoBtn = document.getElementById("redoBtn");
-
-const colorPicker = document.getElementById("colorPicker");
 
 // ==================================================
 // STATE
@@ -99,9 +112,6 @@ const modalSystem = initModalSystem({
   timerModal,
 });
 
-// Start camera on load
-startCamera(video);
-
 // ==================================================
 // LOAD CONFIG
 // ==================================================
@@ -110,10 +120,17 @@ async function initConfig() {
   await loadTimerConfig();
   await loadPriceConfig();
 
-  titleApp.textContent = `Welcome to Photobooth Services (IDR ${capturePrice})`;
+  welcomeMsg.textContent = `WELCOME TO SELFIE-BOX`;
+  priceMsg.textContent = `IDR ${capturePrice}`;
 }
 
 initConfig();
+
+// ==================================================
+// INITIAL VIEW
+// ==================================================
+
+showView("welcomeView");
 
 // ==================================================
 // TEST IPC
@@ -122,6 +139,32 @@ initConfig();
 testBtn.addEventListener("click", async () => {
   const res = await window.api.ping();
   alert(res);
+});
+
+// ==================================================
+// NAVIGATION FLOW
+// ==================================================
+
+// Welcome → Payment
+welcomeNextBtn.addEventListener("click", () => {
+  showView("paymentView");
+});
+
+// Payment → Welcome
+paymentBackBtn.addEventListener("click", () => {
+  showView("welcomeView");
+});
+
+// Payment → Camera (PAY)
+paymentNextBtn.addEventListener("click", () => {
+  showView("cameraView");
+  startCamera(video);
+});
+
+// Camera → Payment (Back)
+cameraBackBtn.addEventListener("click", () => {
+  stopCamera(video);
+  showView("paymentView");
 });
 
 // ==================================================
@@ -152,7 +195,7 @@ savePriceBtn.addEventListener("click", async () => {
 
     if (result.success) {
       setCapturePrice(value);
-      titleApp.textContent = `Welcome to Photobooth Services (${capturePrice})`;
+      priceMsg.textContent = `${capturePrice} IDR`;
       alert("Price saved!");
     }
   }
@@ -195,14 +238,14 @@ captureBtn.addEventListener("click", () => {
     const result = await window.api.saveRawPhoto(imageData);
 
     if (result.success) {
+      stopCamera(video);
+      showView("editorView");
       openEditor({
         imagePath: result.path,
         canvasEl,
-        cameraWrapper,
-        editorContainer,
+        cameraWrapper: cameraView,
+        editorContainer: editorView,
       });
-    } else {
-      alert("Save failed");
     }
 
     isCapturing = false;
@@ -210,40 +253,39 @@ captureBtn.addEventListener("click", () => {
 });
 
 // ==================================================
-// EDITOR TOOL BUTTONS
+// EDITOR TOOLS
 // ==================================================
 
+addTextBtn.addEventListener("click", () => {
+  const canvas = getCanvas();
+  if (!canvas) return;
+  addText(canvas);
+});
+
 addFrameBtn.addEventListener("click", async () => {
-  const fabricInstance = getCanvas();
-  if (!fabricInstance) return alert("Editor not ready");
+  const canvas = getCanvas();
+  if (!canvas) return alert("Editor not ready");
 
   const appPath = await window.api.getPath();
 
   const framePath =
     "file://" + appPath.replace(/\\/g, "/") + "/assets/frames/flower-frame.png";
 
-  addFrame(fabricInstance, framePath);
-});
-
-addTextBtn.addEventListener("click", () => {
-  const fabricInstance = getCanvas();
-
-  if (!fabricInstance) return alert("Editor not ready");
-  addText(fabricInstance);
+  addFrame(canvas, framePath);
 });
 
 addHeartBtn.addEventListener("click", () => {
-  const fabricInstance = getCanvas();
+  const canvas = getCanvas();
 
-  if (!fabricInstance) return alert("Editor not ready");
-  addHeart(fabricInstance);
+  if (!canvas) return alert("Editor not ready");
+  addHeart(canvas);
 });
 
 addStarBtn.addEventListener("click", () => {
-  const fabricInstance = getCanvas();
+  const canvas = getCanvas();
 
-  if (!fabricInstance) return alert("Editor not ready");
-  addStar(fabricInstance);
+  if (!canvas) return alert("Editor not ready");
+  addStar(canvas);
 });
 
 // ==================================================
@@ -251,33 +293,33 @@ addStarBtn.addEventListener("click", () => {
 // ==================================================
 
 colorPicker.addEventListener("input", () => {
-  const fabricInstance = getCanvas();
-  if (!fabricInstance) return;
+  const canvas = getCanvas();
+  if (!canvas) return;
 
-  const active = fabricInstance.getActiveObject();
+  const active = canvas.getActiveObject();
   if (!active) return;
 
   if ("fill" in active) {
     active.set("fill", colorPicker.value);
-    fabricInstance.renderAll();
+    canvas.renderAll();
     saveHistory();
   }
 });
 
 // ==================================================
-// DELETE OBJECT
+// DELETE
 // ==================================================
 
 deleteObjectBtn.addEventListener("click", () => {
-  const fabricInstance = getCanvas();
-  if (!fabricInstance) return;
+  const canvas = getCanvas();
+  if (!canvas) return;
 
-  const success = deleteActiveObject(fabricInstance);
+  const success = deleteActiveObject(canvas);
   if (!success) alert("No object selected");
 });
 
 // ==================================================
-// FILTER PRESET EVENTS
+// FILTER PRESETS
 // ==================================================
 
 document.querySelectorAll(".filterBtn").forEach((btn) => {
@@ -303,11 +345,18 @@ document.querySelectorAll(".filterBtn").forEach((btn) => {
 // ==================================================
 
 document.addEventListener("keydown", (e) => {
-  const fabricInstance = getCanvas();
-  if (!fabricInstance) return;
+  const canvas = getCanvas();
+  if (!canvas) return;
+
+  const active = canvas.getActiveObject();
+
+  // Jangan intercept keyboard saat edit text
+  if (active && active.type === "i-text" && active.isEditing) {
+    return;
+  }
 
   if (e.key === "Delete") {
-    deleteActiveObject(fabricInstance);
+    deleteActiveObject(canvas);
   }
 
   if (e.ctrlKey && e.key === "z") {
@@ -322,7 +371,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ==================================================
-// UNDO / REDO BUTTONS
+// UNDO / REDO
 // ==================================================
 
 undoBtn.addEventListener("click", undo);
@@ -333,16 +382,15 @@ redoBtn.addEventListener("click", redo);
 // ==================================================
 
 saveEditedBtn.addEventListener("click", async () => {
-  const fabricInstance = getCanvas();
-  if (!fabricInstance) return;
+  const canvas = getCanvas();
+  if (!canvas) return;
 
-  fabricInstance.discardActiveObject();
-  fabricInstance.renderAll();
+  canvas.discardActiveObject();
+  canvas.renderAll();
 
-  const finalImage = fabricInstance.toDataURL({
+  const finalImage = canvas.toDataURL({
     format: "png",
     quality: 1,
-    multiplier: 1,
   });
 
   const result = await window.api.saveFinalPhoto(finalImage);
@@ -352,27 +400,41 @@ saveEditedBtn.addEventListener("click", async () => {
 
     closeEditor({
       canvasEl,
-      cameraWrapper,
-      editorContainer,
+      cameraWrapper: cameraView,
+      editorContainer: editorView,
     });
-  } else {
-    alert("Export failed");
+
+    showView("cameraView");
+    startCamera(video);
   }
 });
 
 // ==================================================
-// BACK TO CAMERA
+// EDITOR → CAMERA BACK
 // ==================================================
 
-backToCameraBtn.addEventListener("click", () => {
-  const confirmBack = confirm("Discard current photo and retake?");
+editorBackBtn.addEventListener("click", () => {
+  const confirmBack = confirm("Discard current photo?");
   if (!confirmBack) return;
 
   closeEditor({
     canvasEl,
-    cameraWrapper,
-    editorContainer,
+    cameraWrapper: cameraView,
+    editorContainer: editorView,
   });
 
-  isCapturing = false;
+  showView("cameraView");
+  startCamera(video);
 });
+
+// ==================================================
+// STOP CAMERA HELPER
+// ==================================================
+
+function stopCamera(videoEl) {
+  const stream = videoEl.srcObject;
+  if (!stream) return;
+
+  stream.getTracks().forEach((track) => track.stop());
+  videoEl.srcObject = null;
+}
