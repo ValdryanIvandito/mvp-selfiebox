@@ -4,7 +4,12 @@
 // IMPORT MODULES
 // ==================================================
 
-import { startCamera, captureFrame } from "../utils/camera/camera.js";
+import {
+  startCamera,
+  captureFrame,
+  stopCamera,
+} from "../utils/camera/camera.js";
+
 import { startCountdown } from "../utils/camera/countdown.js";
 import { initModalSystem } from "../utils/ui/modal.js";
 
@@ -27,31 +32,15 @@ import {
   deleteActiveObject,
 } from "../utils/editor/objects.js";
 
-import { openEditor, closeEditor, getCanvas } from "../utils/editor/core.js";
+import { getCanvas, openEditor, closeEditor } from "../utils/editor/core.js";
+
 import { applyPresetFilter } from "../utils/editor/filters.js";
 
-// ==================================================
-// VIEW MANAGER (TAILWIND)
-// ==================================================
-
-function showView(viewId) {
-  document.getElementById("welcomeView").classList.add("hidden");
-  document.getElementById("paymentView").classList.add("hidden");
-  document.getElementById("cameraView").classList.add("hidden");
-  document.getElementById("editorView").classList.add("hidden");
-
-  document.getElementById(viewId).classList.remove("hidden");
-}
+import { showView } from "../utils/ui/showView.js";
 
 // ==================================================
 // ELEMENT REFERENCES
 // ==================================================
-
-// All Views
-const welcomeView = document.getElementById("welcomeView");
-const paymentView = document.getElementById("paymentView");
-const cameraView = document.getElementById("cameraView");
-const editorView = document.getElementById("editorView");
 
 // Welcome View
 const welcomeMsg = document.getElementById("welcomeMsg");
@@ -240,12 +229,7 @@ captureBtn.addEventListener("click", () => {
     if (result.success) {
       stopCamera(video);
       showView("editorView");
-      openEditor({
-        imagePath: result.path,
-        canvasEl,
-        cameraWrapper: cameraView,
-        editorContainer: editorView,
-      });
+      openEditor({ imagePath: result.path, canvasEl });
     }
 
     isCapturing = false;
@@ -397,15 +381,8 @@ saveEditedBtn.addEventListener("click", async () => {
 
   if (result.success) {
     alert("Final photo saved!\n\n" + result.path);
-
-    closeEditor({
-      canvasEl,
-      cameraWrapper: cameraView,
-      editorContainer: editorView,
-    });
-
-    showView("cameraView");
-    startCamera(video);
+    closeEditor({ canvasEl });
+    showView("welcomeView");
   }
 });
 
@@ -416,25 +393,7 @@ saveEditedBtn.addEventListener("click", async () => {
 editorBackBtn.addEventListener("click", () => {
   const confirmBack = confirm("Discard current photo?");
   if (!confirmBack) return;
-
-  closeEditor({
-    canvasEl,
-    cameraWrapper: cameraView,
-    editorContainer: editorView,
-  });
-
+  closeEditor({ canvasEl });
   showView("cameraView");
   startCamera(video);
 });
-
-// ==================================================
-// STOP CAMERA HELPER
-// ==================================================
-
-function stopCamera(videoEl) {
-  const stream = videoEl.srcObject;
-  if (!stream) return;
-
-  stream.getTracks().forEach((track) => track.stop());
-  videoEl.srcObject = null;
-}

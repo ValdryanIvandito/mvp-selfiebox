@@ -30,3 +30,11 @@ export function captureFrame(videoEl) {
 
   return canvas.toDataURL("image/png");
 }
+
+export function stopCamera(videoEl) {
+  const stream = videoEl.srcObject;
+  if (!stream) return;
+
+  stream.getTracks().forEach((track) => track.stop());
+  videoEl.srcObject = null;
+}

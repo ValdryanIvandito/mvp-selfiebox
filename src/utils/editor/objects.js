@@ -4,12 +4,12 @@
 // ADD TEXT
 // ===============================
 
-export function addText(fabricInstance) {
+export function addText(canvas) {
   const text = new fabric.IText("TEXT", {
-    left: fabricInstance.getWidth() / 2,
-    top: fabricInstance.getHeight() / 2,
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
 
-    fill: "#000000",
+    fill: "#ffffff",
     fontSize: 40,
     fontWeight: "bold",
 
@@ -18,9 +18,9 @@ export function addText(fabricInstance) {
     editable: true,
   });
 
-  fabricInstance.add(text);
-  fabricInstance.setActiveObject(text);
-  fabricInstance.renderAll();
+  canvas.add(text);
+  canvas.setActiveObject(text);
+  canvas.renderAll();
 
   requestAnimationFrame(() => {
     setTimeout(() => {
@@ -37,13 +37,13 @@ export function addText(fabricInstance) {
 // ADD HEART
 // ===============================
 
-export function addHeart(fabricInstance) {
+export function addHeart(canvas) {
   const heartPath =
     "M 272 48 C 272 21.5 250.5 0 224 0 C 196.5 0 176 21.5 176 48 C 176 21.5 154.5 0 128 0 C 101.5 0 80 21.5 80 48 C 80 120 176 192 176 192 C 176 192 272 120 272 48 Z";
 
   const heart = new fabric.Path(heartPath, {
-    left: fabricInstance.getWidth() / 2,
-    top: fabricInstance.getHeight() / 2,
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
 
     fill: "#FF1493",
     scaleX: 0.5,
@@ -55,16 +55,16 @@ export function addHeart(fabricInstance) {
     shadow: "2px 2px 8px rgba(0,0,0,0.3)",
   });
 
-  fabricInstance.add(heart);
-  fabricInstance.setActiveObject(heart);
-  fabricInstance.renderAll();
+  canvas.add(heart);
+  canvas.setActiveObject(heart);
+  canvas.renderAll();
 }
 
 // ===============================
 // ADD STAR
 // ===============================
 
-export function addStar(fabricInstance) {
+export function addStar(canvas) {
   const starPoints = [
     { x: 0, y: 50 },
     { x: 50, y: 50 },
@@ -79,8 +79,8 @@ export function addStar(fabricInstance) {
   ];
 
   const star = new fabric.Polygon(starPoints, {
-    left: fabricInstance.getWidth() / 2,
-    top: fabricInstance.getHeight() / 2,
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
 
     fill: "#FFD700",
     scaleX: 0.6,
@@ -92,24 +92,24 @@ export function addStar(fabricInstance) {
     shadow: "2px 2px 8px rgba(0,0,0,0.3)",
   });
 
-  fabricInstance.add(star);
-  fabricInstance.setActiveObject(star);
-  fabricInstance.renderAll();
+  canvas.add(star);
+  canvas.setActiveObject(star);
+  canvas.renderAll();
 }
 
 // ===============================
 // ADD FRAME (IMAGE)
 // ===============================
 
-export function addFrame(fabricInstance, frameUrl) {
+export function addFrame(canvas, frameUrl) {
   fabric.Image.fromURL(
     frameUrl,
     (img) => {
-      img.scaleToWidth(fabricInstance.getWidth());
+      img.scaleToWidth(canvas.getWidth());
 
       img.set({
-        left: fabricInstance.getWidth() / 2,
-        top: fabricInstance.getHeight() / 2,
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
         originX: "center",
         originY: "center",
 
@@ -117,9 +117,9 @@ export function addFrame(fabricInstance, frameUrl) {
         evented: false,
       });
 
-      fabricInstance.add(img);
-      fabricInstance.bringToFront(img);
-      fabricInstance.renderAll();
+      canvas.add(img);
+      canvas.bringToFront(img);
+      canvas.renderAll();
     },
     { crossOrigin: "anonymous" },
   );
@@ -129,14 +129,14 @@ export function addFrame(fabricInstance, frameUrl) {
 // DELETE ACTIVE OBJECT
 // ===============================
 
-export function deleteActiveObject(fabricInstance) {
-  const active = fabricInstance.getActiveObject();
+export function deleteActiveObject(canvas) {
+  const active = canvas.getActiveObject();
 
   if (!active) return false;
 
-  fabricInstance.remove(active);
-  fabricInstance.discardActiveObject();
-  fabricInstance.renderAll();
+  canvas.remove(active);
+  canvas.discardActiveObject();
+  canvas.renderAll();
 
   return true;
 }

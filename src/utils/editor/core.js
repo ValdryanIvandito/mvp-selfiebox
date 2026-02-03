@@ -2,30 +2,21 @@
 
 import { initHistory, saveHistory } from "./history.js";
 
-let fabricInstance = null;
+let canvas = null;
 
 // ==================================================
 // GETTER
 // ==================================================
 
 export function getCanvas() {
-  return fabricInstance;
+  return canvas;
 }
 
 // ==================================================
 // INIT EDITOR
 // ==================================================
 
-export function openEditor({
-  imagePath,
-  canvasEl,
-  cameraWrapper,
-  editorContainer,
-}) {
-  // UI toggle
-  cameraWrapper.classList.add("hidden");
-  editorContainer.classList.remove("hidden");
-
+export function openEditor({ imagePath, canvasEl }) {
   const WIDTH = 720;
   const HEIGHT = 480;
 
@@ -34,38 +25,38 @@ export function openEditor({
 
   requestAnimationFrame(() => {
     // Destroy old instance
-    if (fabricInstance) {
-      fabricInstance.dispose();
-      fabricInstance = null;
+    if (canvas) {
+      canvas.dispose();
+      canvas = null;
     }
 
     // Create fabric canvas
-    fabricInstance = new fabric.Canvas("fabricCanvas", {
+    canvas = new fabric.Canvas("fabricCanvas", {
       width: WIDTH,
       height: HEIGHT,
       preserveObjectStacking: true,
     });
 
     // Calculate canvas offset
-    fabricInstance.calcOffset();
-    fabricInstance.upperCanvasEl.tabIndex = 0;
-    fabricInstance.upperCanvasEl.focus();
+    canvas.calcOffset();
+    canvas.upperCanvasEl.tabIndex = 0;
+    canvas.upperCanvasEl.focus();
 
     // Init undo / redo
-    initHistory(fabricInstance);
+    initHistory(canvas);
 
     // ===============================
     // FABRIC EVENTS
     // ===============================
 
     // Lock proportional scale
-    fabricInstance.on("object:scaling", (e) => {
+    canvas.on("object:scaling", (e) => {
       const obj = e.target;
       if (obj) obj.lockUniScaling = true;
     });
 
     // Snap to center
-    fabricInstance.on("object:moving", (e) => {
+    canvas.on("object:moving", (e) => {
       const obj = e.target;
       if (!obj) return;
 
@@ -76,7 +67,7 @@ export function openEditor({
       if (Math.abs(obj.top - centerY) < 10) obj.top = centerY;
     });
 
-    fabricInstance.on("mouse:dblclick", (e) => {
+    canvas.on("mouse:dblclick", (e) => {
       if (e.target && e.target.type === "i-text") {
         requestAnimationFrame(() => {
           setTimeout(() => {
@@ -113,9 +104,9 @@ export function openEditor({
           evented: false,
         });
 
-        fabricInstance.add(img);
-        fabricInstance.sendToBack(img);
-        fabricInstance.renderAll();
+        canvas.add(img);
+        canvas.sendToBack(img);
+        canvas.renderAll();
 
         // Save base state
         saveHistory();
@@ -129,13 +120,10 @@ export function openEditor({
 // CLOSE EDITOR
 // ==================================================
 
-export function closeEditor({ canvasEl, cameraWrapper, editorContainer }) {
-  editorContainer.classList.add("hidden");
-  cameraWrapper.classList.remove("hidden");
-
-  if (fabricInstance) {
-    fabricInstance.dispose();
-    fabricInstance = null;
+export function closeEditor({ canvasEl }) {
+  if (canvas) {
+    canvas.dispose();
+    canvas = null;
   }
 
   // Clear GPU memory
