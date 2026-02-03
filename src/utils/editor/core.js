@@ -46,6 +46,7 @@ export function openEditor({
       preserveObjectStacking: true,
     });
 
+    // Calculate canvas offset
     fabricInstance.calcOffset();
     fabricInstance.upperCanvasEl.tabIndex = 0;
     fabricInstance.upperCanvasEl.focus();

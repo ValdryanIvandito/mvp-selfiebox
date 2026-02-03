@@ -29,6 +29,8 @@ import {
 
 import { openEditor, closeEditor, getCanvas } from "../utils/editor/core.js";
 
+import { applyPresetFilter } from "../utils/editor/filters.js";
+
 // ==================================================
 // ELEMENT REFERENCES
 // ==================================================
@@ -272,6 +274,28 @@ deleteObjectBtn.addEventListener("click", () => {
 
   const success = deleteActiveObject(fabricInstance);
   if (!success) alert("No object selected");
+});
+
+// ==================================================
+// FILTER PRESET EVENTS
+// ==================================================
+
+document.querySelectorAll(".filterBtn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    // remove active highlight
+    document.querySelectorAll(".filterBtn").forEach((b) => {
+      b.classList.remove("ring-2", "ring-yellow-400");
+    });
+
+    // highlight selected
+    btn.classList.add("ring-2", "ring-yellow-400");
+
+    const type = btn.dataset.filter;
+
+    if (!getCanvas()) return;
+
+    applyPresetFilter(type);
+  });
 });
 
 // ==================================================

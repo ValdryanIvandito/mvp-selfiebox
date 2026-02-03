@@ -10,6 +10,32 @@
 
     <!-- Fabric.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
+
+    <style>
+      .presetBtn {
+        background: #374151;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: 0.15s;
+      }
+
+      .presetBtn:hover {
+        background: #4b5563;
+      }
+
+      .presetBtn:active {
+        transform: scale(0.95);
+      }
+
+      /* Hide scrollbar */
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
   </head>
 
   <body class="bg-gray-900 font-sans">
@@ -57,7 +83,7 @@
       class="hidden flex flex-col select-none min-h-screen"
     >
       <!-- TOP BAR -->
-      <div class="p-4 flex items-center justify-between">
+      <div class="pt-4 px-4 flex items-center justify-between">
         <button
           id="backToCameraBtn"
           class="bg-gray-600 hover:bg-gray-700 active:scale-95 text-white px-5 py-2 rounded-lg font-semibold transition"
@@ -75,9 +101,7 @@
       </div>
 
       <!-- MAIN EDITOR AREA -->
-      <div
-        class="flex mt-4 justify-between items-center relative overflow-hidden"
-      >
+      <div class="flex justify-between items-center relative overflow-hidden">
         <!-- TOOL BAR -->
         <div class="flex flex-col justify-center items-center gap-5 p-4">
           <button
@@ -109,9 +133,39 @@
           </button>
         </div>
 
-        <!-- CANVAS AREA -->
-        <div class="flex justify-center items-center max-w-[720px]">
-          <canvas id="fabricCanvas" width="720" height="480"></canvas>
+        <div class="flex-col justify-center items-center">
+          <!-- FILTER PRESET BAR -->
+          <div
+            id="filterBar"
+            class="flex justify-center gap-3 px-4 py-2 overflow-x-auto scrollbar-hide mb-4"
+          >
+            <button data-filter="bw" class="filterBtn presetBtn w-24">
+              B&W
+            </button>
+            <button data-filter="sepia" class="filterBtn presetBtn w-24">
+              Sepia
+            </button>
+            <button data-filter="polaroid" class="filterBtn presetBtn w-24">
+              Polaroid
+            </button>
+            <button data-filter="warm" class="filterBtn presetBtn w-24">
+              Warm
+            </button>
+            <button data-filter="cool" class="filterBtn presetBtn w-24">
+              Cool
+            </button>
+            <button
+              data-filter="none"
+              class="filterBtn presetBtn bg-red-600 w-24"
+            >
+              ✖ Reset
+            </button>
+          </div>
+
+          <!-- CANVAS AREA -->
+          <div class="flex justify-center items-center max-w-[720px]">
+            <canvas id="fabricCanvas" width="720" height="480"></canvas>
+          </div>
         </div>
 
         <!-- RIGHT TOOL PANEL -->
