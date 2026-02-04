@@ -4,6 +4,18 @@ export let captureTimer = 3;
 export let capturePrice = 0;
 
 // =======================
+// SETTERS
+// =======================
+
+export function setCaptureTimer(value) {
+  captureTimer = value;
+}
+
+export function setCapturePrice(value) {
+  capturePrice = value;
+}
+
+// =======================
 // LOAD CONFIG
 // =======================
 
@@ -31,16 +43,4 @@ export async function loadPriceConfig() {
   } catch (err) {
     console.error("Price load failed", err);
   }
-}
-
-// =======================
-// SETTERS
-// =======================
-
-export function setCaptureTimer(value) {
-  captureTimer = value;
-}
-
-export function setCapturePrice(value) {
-  capturePrice = value;
 }

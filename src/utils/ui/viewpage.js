@@ -1,6 +1,6 @@
-/* src/utils/ui/view.js */
+/* src/utils/ui/viewpage.js */
 
-export function showView(viewId) {
+export function viewpage(viewId) {
   document.getElementById("welcomeView").classList.add("hidden");
   document.getElementById("paymentView").classList.add("hidden");
   document.getElementById("cameraView").classList.add("hidden");

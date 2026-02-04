@@ -11,13 +11,13 @@ function ipcHandlers() {
 
   const channels = [
     "ping",
+    "get-path",
     "save-price",
     "get-price",
     "save-timer",
     "get-timer",
     "save-raw-photo",
     "save-final-photo",
-    "get-path",
   ];
 
   channels.forEach((ch) => ipcMain.removeHandler(ch));
@@ -28,6 +28,14 @@ function ipcHandlers() {
 
   ipcMain.handle("ping", async () => {
     return "pong from electron main process";
+  });
+
+  // ============================
+  // GET ROOT PATH
+  // ============================
+
+  ipcMain.handle("get-path", async () => {
+    return process.cwd();
   });
 
   // ============================
@@ -113,7 +121,7 @@ function ipcHandlers() {
   });
 
   // ============================
-  // RAW PHOTO SAVE
+  // FINAL PHOTO SAVE
   // ============================
 
   ipcMain.handle("save-final-photo", async (event, base64Image) => {
@@ -130,11 +138,6 @@ function ipcHandlers() {
       path: filePath,
       fileName,
     };
-  });
-
-  // Get app root path
-  ipcMain.handle("get-path", async () => {
-    return process.cwd();
   });
 }
 

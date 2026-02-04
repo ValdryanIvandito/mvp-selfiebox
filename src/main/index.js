@@ -4,8 +4,6 @@ const path = require("path");
 const { app, BrowserWindow, Menu } = require("electron");
 const { ipcHandlers } = require("../ipc");
 
-// app.disableHardwareAcceleration();
-
 // ============================
 // WINDOW
 // ============================
@@ -14,10 +12,6 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
-
-    // fullscreen: true,
-    // autoHideMenuBar: true,
-
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
       backgroundThrottling: false,
@@ -25,7 +19,6 @@ function createWindow() {
   });
 
   win.loadFile(path.join(__dirname, "../renderer/pages/index.html"));
-
   // win.webContents.openDevTools();
 }
 

@@ -4,26 +4,28 @@
 // IMPORT MODULES
 // ==================================================
 
+import { initModalSystem } from "../utils/ui/modal.js";
+import { viewpage } from "../utils/ui/viewpage.js";
+
+import {
+  capturePrice,
+  setCapturePrice,
+  captureTimer,
+  setCaptureTimer,
+  loadPriceConfig,
+  loadTimerConfig,
+} from "../utils/state/state.js";
+
+import { startCountdown } from "../utils/camera/countdown.js";
 import {
   startCamera,
   captureFrame,
   stopCamera,
 } from "../utils/camera/camera.js";
 
-import { startCountdown } from "../utils/camera/countdown.js";
-import { initModalSystem } from "../utils/ui/modal.js";
-
-import {
-  captureTimer,
-  setCaptureTimer,
-  loadTimerConfig,
-  loadPriceConfig,
-  capturePrice,
-  setCapturePrice,
-} from "../utils/state/state.js";
-
+import { getCanvas, openEditor, closeEditor } from "../utils/editor/core.js";
 import { undo, redo, saveHistory } from "../utils/editor/history.js";
-
+import { applyPresetFilter } from "../utils/editor/filters.js";
 import {
   addText,
   addHeart,
@@ -31,12 +33,6 @@ import {
   addFrame,
   deleteActiveObject,
 } from "../utils/editor/objects.js";
-
-import { getCanvas, openEditor, closeEditor } from "../utils/editor/core.js";
-
-import { applyPresetFilter } from "../utils/editor/filters.js";
-
-import { showView } from "../utils/ui/showView.js";
 
 // ==================================================
 // ELEMENT REFERENCES
@@ -75,13 +71,10 @@ const deleteObjectBtn = document.getElementById("deleteObjectBtn");
 const backdrop = document.getElementById("modalBackdrop");
 const priceModal = document.getElementById("priceModal");
 const timerModal = document.getElementById("timerModal");
-
 const cancelPriceBtn = document.getElementById("cancelPriceBtn");
 const savePriceBtn = document.getElementById("savePriceBtn");
-
 const cancelTimerBtn = document.getElementById("cancelTimerBtn");
 const saveTimerBtn = document.getElementById("saveTimerBtn");
-
 const priceInput = document.getElementById("priceInput");
 const timerInput = document.getElementById("timerInput");
 
@@ -101,10 +94,6 @@ const modalSystem = initModalSystem({
   timerModal,
 });
 
-// ==================================================
-// LOAD CONFIG
-// ==================================================
-
 async function initConfig() {
   await loadTimerConfig();
   await loadPriceConfig();
@@ -114,12 +103,7 @@ async function initConfig() {
 }
 
 initConfig();
-
-// ==================================================
-// INITIAL VIEW
-// ==================================================
-
-showView("welcomeView");
+viewpage("welcomeView");
 
 // ==================================================
 // TEST IPC
@@ -136,24 +120,24 @@ testBtn.addEventListener("click", async () => {
 
 // Welcome → Payment
 welcomeNextBtn.addEventListener("click", () => {
-  showView("paymentView");
+  viewpage("paymentView");
 });
 
 // Payment → Welcome
 paymentBackBtn.addEventListener("click", () => {
-  showView("welcomeView");
+  viewpage("welcomeView");
 });
 
 // Payment → Camera (PAY)
 paymentNextBtn.addEventListener("click", () => {
-  showView("cameraView");
+  viewpage("cameraView");
   startCamera(video);
 });
 
 // Camera → Payment (Back)
 cameraBackBtn.addEventListener("click", () => {
   stopCamera(video);
-  showView("paymentView");
+  viewpage("paymentView");
 });
 
 // ==================================================
@@ -214,7 +198,7 @@ saveTimerBtn.addEventListener("click", async () => {
 });
 
 // ==================================================
-// CAPTURE FLOW
+// CAPTURE PHOTO
 // ==================================================
 
 captureBtn.addEventListener("click", () => {
@@ -228,7 +212,7 @@ captureBtn.addEventListener("click", () => {
 
     if (result.success) {
       stopCamera(video);
-      showView("editorView");
+      viewpage("editorView");
       openEditor({ imagePath: result.path, canvasEl });
     }
 
@@ -240,12 +224,6 @@ captureBtn.addEventListener("click", () => {
 // EDITOR TOOLS
 // ==================================================
 
-addTextBtn.addEventListener("click", () => {
-  const canvas = getCanvas();
-  if (!canvas) return;
-  addText(canvas);
-});
-
 addFrameBtn.addEventListener("click", async () => {
   const canvas = getCanvas();
   if (!canvas) return alert("Editor not ready");
@@ -256,6 +234,12 @@ addFrameBtn.addEventListener("click", async () => {
     "file://" + appPath.replace(/\\/g, "/") + "/assets/frames/flower-frame.png";
 
   addFrame(canvas, framePath);
+});
+
+addTextBtn.addEventListener("click", () => {
+  const canvas = getCanvas();
+  if (!canvas) return;
+  addText(canvas);
 });
 
 addHeartBtn.addEventListener("click", () => {
@@ -291,6 +275,13 @@ colorPicker.addEventListener("input", () => {
 });
 
 // ==================================================
+// UNDO / REDO
+// ==================================================
+
+undoBtn.addEventListener("click", undo);
+redoBtn.addEventListener("click", redo);
+
+// ==================================================
 // DELETE
 // ==================================================
 
@@ -303,28 +294,6 @@ deleteObjectBtn.addEventListener("click", () => {
 });
 
 // ==================================================
-// FILTER PRESETS
-// ==================================================
-
-document.querySelectorAll(".filterBtn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    // remove active highlight
-    document.querySelectorAll(".filterBtn").forEach((b) => {
-      b.classList.remove("ring-2", "ring-yellow-400");
-    });
-
-    // highlight selected
-    btn.classList.add("ring-2", "ring-yellow-400");
-
-    const type = btn.dataset.filter;
-
-    if (!getCanvas()) return;
-
-    applyPresetFilter(type);
-  });
-});
-
-// ==================================================
 // KEYBOARD SHORTCUTS
 // ==================================================
 
@@ -334,7 +303,6 @@ document.addEventListener("keydown", (e) => {
 
   const active = canvas.getActiveObject();
 
-  // Jangan intercept keyboard saat edit text
   if (active && active.type === "i-text" && active.isEditing) {
     return;
   }
@@ -355,11 +323,24 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ==================================================
-// UNDO / REDO
+// FILTER PRESETS
 // ==================================================
 
-undoBtn.addEventListener("click", undo);
-redoBtn.addEventListener("click", redo);
+document.querySelectorAll(".filterBtn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filterBtn").forEach((b) => {
+      b.classList.remove("ring-2", "ring-yellow-400");
+    });
+
+    btn.classList.add("ring-2", "ring-yellow-400");
+
+    const type = btn.dataset.filter;
+
+    if (!getCanvas()) return;
+
+    applyPresetFilter(type);
+  });
+});
 
 // ==================================================
 // SAVE FINAL IMAGE
@@ -382,7 +363,7 @@ saveEditedBtn.addEventListener("click", async () => {
   if (result.success) {
     alert("Final photo saved!\n\n" + result.path);
     closeEditor({ canvasEl });
-    showView("welcomeView");
+    viewpage("welcomeView");
   }
 });
 
@@ -394,6 +375,6 @@ editorBackBtn.addEventListener("click", () => {
   const confirmBack = confirm("Discard current photo?");
   if (!confirmBack) return;
   closeEditor({ canvasEl });
-  showView("cameraView");
+  viewpage("cameraView");
   startCamera(video);
 });
