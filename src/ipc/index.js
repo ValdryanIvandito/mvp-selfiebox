@@ -3,6 +3,7 @@
 const path = require("path");
 const fs = require("fs");
 const { ipcMain } = require("electron");
+const logger = require("../main/logger");
 
 function ipcHandlers() {
   // ============================
@@ -23,19 +24,25 @@ function ipcHandlers() {
   channels.forEach((ch) => ipcMain.removeHandler(ch));
 
   // ============================
-  // TEST
+  // SYSTEM
   // ============================
 
   ipcMain.handle("ping", async () => {
     return "pong from electron main process";
   });
 
-  // ============================
-  // GET ROOT PATH
-  // ============================
-
   ipcMain.handle("get-path", async () => {
     return process.cwd();
+  });
+
+  ipcMain.on("log", (event, payload) => {
+    const { level, context, message, meta } = payload;
+
+    if (level === "ERROR") {
+      logger.error(context, message, meta);
+    } else {
+      logger.info(context, message, meta);
+    }
   });
 
   // ============================
@@ -106,9 +113,7 @@ function ipcHandlers() {
 
   ipcMain.handle("save-raw-photo", async (event, base64Image) => {
     const base64Data = base64Image.replace(/^data:image\/png;base64,/, "");
-
     const fileName = `photo_${Date.now()}.png`;
-
     const filePath = path.join(process.cwd(), "assets", "raw", fileName);
 
     fs.writeFileSync(filePath, base64Data, "base64");
@@ -139,6 +144,10 @@ function ipcHandlers() {
       fileName,
     };
   });
+
+  // ============================
+  // LOG
+  // ============================
 }
 
 module.exports = {

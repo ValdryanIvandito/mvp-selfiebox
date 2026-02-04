@@ -3,6 +3,7 @@
 const path = require("path");
 const { app, BrowserWindow, Menu } = require("electron");
 const { ipcHandlers } = require("../ipc");
+const logger = require("./logger");
 
 // ============================
 // WINDOW
@@ -75,6 +76,7 @@ function createMenu() {
 // ============================
 
 app.whenReady().then(() => {
+  logger.info("app", "Application started");
   ipcHandlers();
   createWindow();
   createMenu();
@@ -85,5 +87,6 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
+  logger.info("app", "Application closed");
   if (process.platform !== "darwin") app.quit();
 });

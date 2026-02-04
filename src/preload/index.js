@@ -9,6 +9,13 @@ contextBridge.exposeInMainWorld("api", {
 
   ping: () => ipcRenderer.invoke("ping"),
   getPath: () => ipcRenderer.invoke("get-path"),
+  log: (level, context, message, meta = {}) =>
+    ipcRenderer.send("log", {
+      level,
+      context,
+      message,
+      meta,
+    }),
 
   // =====================
   // CONFIG
