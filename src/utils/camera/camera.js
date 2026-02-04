@@ -1,5 +1,9 @@
 /* src/utils/camera.js */
 
+import { createLog } from "../log/createLog.js";
+
+const log = createLog("camera");
+
 export async function startCamera(videoEl) {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -12,7 +16,11 @@ export async function startCamera(videoEl) {
     });
 
     videoEl.srcObject = stream;
+    log.info("Camera started");
   } catch (error) {
+    log.error("Camera access failed", {
+      error: error.message,
+    });
     alert("Camera access failed");
     console.error("Camera error:", error);
   }
@@ -32,9 +40,15 @@ export function captureFrame(videoEl) {
 }
 
 export function stopCamera(videoEl) {
-  const stream = videoEl.srcObject;
-  if (!stream) return;
+  try {
+    const stream = videoEl.srcObject;
+    if (!stream) return;
 
-  stream.getTracks().forEach((track) => track.stop());
-  videoEl.srcObject = null;
+    stream.getTracks().forEach((track) => track.stop());
+    videoEl.srcObject = null;
+
+    log.info("Camera stopped");
+  } catch (err) {
+    log.error("Stop camera failed", { error: err.message });
+  }
 }

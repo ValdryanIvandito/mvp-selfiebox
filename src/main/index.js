@@ -76,7 +76,7 @@ function createMenu() {
 // ============================
 
 app.whenReady().then(() => {
-  logger.info("app", "Application started");
+  logger.info("main", "Application started");
   ipcHandlers();
   createWindow();
   createMenu();
@@ -87,6 +87,6 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  logger.info("app", "Application closed");
+  logger.info("main", "Application closed");
   if (process.platform !== "darwin") app.quit();
 });

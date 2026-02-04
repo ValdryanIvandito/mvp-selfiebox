@@ -27,14 +27,17 @@ function ipcHandlers() {
   // SYSTEM
   // ============================
 
+  // Testing
   ipcMain.handle("ping", async () => {
     return "pong from electron main process";
   });
 
+  // Get root path
   ipcMain.handle("get-path", async () => {
     return process.cwd();
   });
 
+  // Create Log
   ipcMain.on("log", (event, payload) => {
     const { level, context, message, meta } = payload;
 
@@ -112,17 +115,25 @@ function ipcHandlers() {
   // ============================
 
   ipcMain.handle("save-raw-photo", async (event, base64Image) => {
-    const base64Data = base64Image.replace(/^data:image\/png;base64,/, "");
-    const fileName = `photo_${Date.now()}.png`;
-    const filePath = path.join(process.cwd(), "assets", "raw", fileName);
+    try {
+      const base64Data = base64Image.replace(/^data:image\/png;base64,/, "");
+      const fileName = `photo_${Date.now()}.png`;
+      const filePath = path.join(process.cwd(), "assets", "raw", fileName);
 
-    fs.writeFileSync(filePath, base64Data, "base64");
+      fs.writeFileSync(filePath, base64Data, "base64");
 
-    return {
-      success: true,
-      path: filePath,
-      fileName,
-    };
+      return {
+        success: true,
+        path: filePath,
+        fileName,
+      };
+    } catch (err) {
+      logger.error("ipc", "Failed saving raw photo", {
+        error: err.message,
+      });
+
+      return { success: false };
+    }
   });
 
   // ============================
@@ -130,24 +141,26 @@ function ipcHandlers() {
   // ============================
 
   ipcMain.handle("save-final-photo", async (event, base64Image) => {
-    const base64Data = base64Image.replace(/^data:image\/png;base64,/, "");
+    try {
+      const base64Data = base64Image.replace(/^data:image\/png;base64,/, "");
+      const fileName = `photo_${Date.now()}.png`;
+      const filePath = path.join(process.cwd(), "assets", "final", fileName);
 
-    const fileName = `photo_${Date.now()}.png`;
+      fs.writeFileSync(filePath, base64Data, "base64");
 
-    const filePath = path.join(process.cwd(), "assets", "final", fileName);
+      return {
+        success: true,
+        path: filePath,
+        fileName,
+      };
+    } catch (err) {
+      logger.error("ipc", "Failed saving final photo", {
+        error: err.message,
+      });
 
-    fs.writeFileSync(filePath, base64Data, "base64");
-
-    return {
-      success: true,
-      path: filePath,
-      fileName,
-    };
+      return { success: false };
+    }
   });
-
-  // ============================
-  // LOG
-  // ============================
 }
 
 module.exports = {

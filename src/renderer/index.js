@@ -3,6 +3,7 @@
 // ==================================================
 // IMPORT MODULES
 // ==================================================
+import { createLog } from "../utils/log/createLog.js";
 
 import { initModalSystem } from "../utils/ui/modal.js";
 import { viewpage } from "../utils/ui/viewpage.js";
@@ -81,12 +82,12 @@ const timerInput = document.getElementById("timerInput");
 // ==================================================
 // STATE
 // ==================================================
-
 let isCapturing = false;
 
 // ==================================================
 // INIT SYSTEMS
 // ==================================================
+const log = createLog("renderer");
 
 const modalSystem = initModalSystem({
   backdrop,
@@ -95,11 +96,20 @@ const modalSystem = initModalSystem({
 });
 
 async function initConfig() {
-  await loadTimerConfig();
-  await loadPriceConfig();
+  try {
+    await loadTimerConfig();
+    await loadPriceConfig();
 
-  welcomeMsg.textContent = `WELCOME TO SELFIE-BOX`;
-  priceMsg.textContent = `IDR ${capturePrice}`;
+    welcomeMsg.textContent = `WELCOME TO SELFIE-BOX`;
+    priceMsg.textContent = `IDR ${capturePrice}`;
+
+    log.info("Config successfuly loaded", {
+      price: capturePrice,
+      timer: captureTimer,
+    });
+  } catch (err) {
+    log.error("Config failed to load", { error: err.message });
+  }
 }
 
 initConfig();
@@ -206,14 +216,24 @@ captureBtn.addEventListener("click", () => {
 
   isCapturing = true;
 
-  startCountdown(captureTimer, countdownText, async () => {
-    const imageData = captureFrame(video);
-    const result = await window.api.saveRawPhoto(imageData);
+  log.info("Capture started");
 
-    if (result.success) {
-      stopCamera(video);
-      viewpage("editorView");
-      openEditor({ imagePath: result.path, canvasEl });
+  startCountdown(captureTimer, countdownText, async () => {
+    try {
+      const imageData = captureFrame(video);
+      const result = await window.api.saveRawPhoto(imageData);
+
+      if (result.success) {
+        stopCamera(video);
+        viewpage("editorView");
+        openEditor({ imagePath: result.path, canvasEl });
+
+        log.info("Raw photo successfuly saved", { path: result.path });
+      } else {
+        log.error("Raw photo failed to save");
+      }
+    } catch (err) {
+      log.error("Raw photo session crashed", { error: err.message });
     }
 
     isCapturing = false;
@@ -347,23 +367,33 @@ document.querySelectorAll(".filterBtn").forEach((btn) => {
 // ==================================================
 
 saveEditedBtn.addEventListener("click", async () => {
-  const canvas = getCanvas();
-  if (!canvas) return;
+  try {
+    const canvas = getCanvas();
+    if (!canvas) {
+      log.error("Failed to load canvas");
+      return;
+    }
 
-  canvas.discardActiveObject();
-  canvas.renderAll();
+    canvas.discardActiveObject();
+    canvas.renderAll();
 
-  const finalImage = canvas.toDataURL({
-    format: "png",
-    quality: 1,
-  });
+    const finalImage = canvas.toDataURL({
+      format: "png",
+      quality: 1,
+    });
 
-  const result = await window.api.saveFinalPhoto(finalImage);
+    const result = await window.api.saveFinalPhoto(finalImage);
 
-  if (result.success) {
-    alert("Final photo saved!\n\n" + result.path);
-    closeEditor({ canvasEl });
-    viewpage("welcomeView");
+    if (result.success) {
+      log.info("Final photo successfuly saved", { path: result.path });
+      alert("Final photo successfully saved!\n\n" + result.path);
+      closeEditor({ canvasEl });
+      viewpage("welcomeView");
+    } else {
+      log.error("Final photo failed to save");
+    }
+  } catch (err) {
+    log.error("Final photo session crashed", { error: err.message });
   }
 });
 
